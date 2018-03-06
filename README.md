@@ -7,5 +7,5 @@ The code is requires several libraries, chiefly pandas, scikit-learn, and keras.
 
 Raw data files and code for processing them is omitted. Included instead is allData.zip, which contains allSatire.csv and allSerious.csv. These files contain all satirical and all serious news articles used as data for this project.
 
-#THIS IS CURRENTLY UNDER CONSTRUCTION
+# THIS IS CURRENTLY UNDER CONSTRUCTION
 New files will be added as they become available. The final report will be uploaded in April.
