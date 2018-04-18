@@ -1,4 +1,4 @@
-# Thesis: Classifying News, Satire, and "Fake News": An SVM and Deep Learning Approach
+# Classifying News, Satire, and "Fake News": An SVM and Deep Learning Approach
 Senior Thesis completed as part of coursework for Princeton University.
 
 This repository contains the final report, some of the code, and data used in my senior thesis titled *Classifying News, Satire, and "Fake News": An SVM and Deep Learning Approach*.
