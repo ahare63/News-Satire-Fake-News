@@ -1,3 +1,4 @@
+## Currently under construction - refactoring code
 # Classifying News, Satire, and "Fake News": An SVM and Deep Learning Approach
 Senior Thesis completed as part of coursework for Princeton University.
 This thesis was awarded the S.S. Wilkes Memorial Prize by the Princeton Operations Research and Financial Engineering department for the best thesis on "statistics and its applications to solving societal problems."
@@ -11,7 +12,7 @@ Raw data files and code for processing them is omitted. Included instead is allD
 Some code has been refactored from what was used in the actual testing to be more readable and modular. These changes have resulted in a significant departure from the original code. This code is mostly included for reference and to give an idea of the procedures used in this thesis.
 
 # Dependencies
-This thesis makes use of several standard Python libraries, specifically:
+This thesis makes use of several commonly used Python libraries, specifically:
 * `csv`
 * `keras`
 * `nltk`
