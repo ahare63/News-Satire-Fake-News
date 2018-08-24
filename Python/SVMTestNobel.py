@@ -1,4 +1,13 @@
-# run SVM model on Princeton's Nobel cluster
+"""
+SVMTestNobel.py
+Author: Adam Hare
+Last Updated: 23 August 2018
+
+Description:
+This script runs the SVM model on Princeton's Nobel cluster. Most of this file is functions 
+"""
+
+
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -7,14 +16,11 @@ from scipy.sparse import hstack
 import numpy as np
 from sklearn import preprocessing
 
-# This provides a number of functions for testing the classifiers using the different training and testing sets we
-# are interested in.
-
 # print some important measures (accuracy, precision, recall, F measure)
 # here, x is a list of the predicted values returned from the SVM, y is a list of the "ground truth" values
 # scoreList is a structure for storing results to be used later, iteration indicates which iteration of the algorithm is being analyzed
 # verbose is a boolean which prints nicely formatted data if true or just the iteration and LaTeX formatted data if false
-def printMeasures(x, y, scoreList, iteration, verbose=false):
+def printMeasures(x, y, scoreList, iteration, verbose=False):
     # initialize variables
     TP = 0.0
     FP = 0.0

@@ -1,4 +1,16 @@
-# Run C-LSTM Model on Princeton's Nobel cluster
+"""
+NNTrainNobel.py
+Author: Adam Hare
+Last Updated: 23 August 2018
+
+Description:
+This script runs the C-LSTM model on Princeton's Nobel network. It is configured to use Python 2.7 because that is
+the version on the Nobel cluster.
+
+Even on the Nobel cluster, these calculations are slow and calculation-intensive.
+"""
+
+
 from __future__ import division
 import pandas as pd
 from keras.preprocessing.text import Tokenizer
@@ -12,13 +24,13 @@ from keras.callbacks import EarlyStopping
 from keras.regularizers import l2
 import tensorflow as tf
 
-# fix out of memory errors on Nobel
+# fixes out of memory errors on Nobel
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 K.set_session(tf.Session(config=config))
 
 
-# append title to start of body
+# function to append title to start of body so that it is included in the analysis
 def get_raw_text(row):
     return row.Title + ". " + row.Body
 
@@ -74,6 +86,7 @@ xTest = np.array(pad_sequences(testAsSequence, maxlen=maxlen))
 xTest[xTest > maxWords] = 0  # reserved for unknown string in preprocessing -> remove words from test not in train
 
 # build the CLSTM model with Keras
+# the parameters given here are an example and should be fit according to the data
 model_CLSTM = Sequential()
 model_CLSTM.add(Embedding(maxWords + 1, 100, input_length=maxlen))
 model_CLSTM.add(Dropout(0.3))
