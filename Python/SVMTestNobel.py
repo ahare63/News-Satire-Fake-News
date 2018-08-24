@@ -4,7 +4,7 @@ Author: Adam Hare
 Last Updated: 23 August 2018
 
 Description:
-This script runs the SVM model on Princeton's Nobel cluster. Most of this file is functions 
+This script runs the SVM model on Princeton's Nobel cluster.
 """
 
 
@@ -41,7 +41,7 @@ def printMeasures(x, y, scoreList, iteration, verbose=False):
             else:
                 TN += 1
 
-    assert(N == TP+FP+TN+FN)  # checks that every article was evaluated
+    assert(N == TP+FP+TN+FN)  # Check that every article was evaluated
 
     # store each result as a percentage
     scoreList[0][iteration] = TP/N
@@ -50,11 +50,12 @@ def printMeasures(x, y, scoreList, iteration, verbose=False):
     scoreList[3][iteration] = TN/N
 
     # print the iteration number, optionally print the percentage of each classification type
-    print("Iteration = %d" % iteration)
-    # print("TP = %.4f" % (TP/N))
-    # print("FP = %.4f" % (FP/N))
-    # print("FN = %.4f" % (FN/N))
-    # print("TN = %.4f" % (TN/N))
+    if verbose
+        print("Iteration = %d" % iteration)
+        print("TP = %.4f" % (TP/N))
+        print("FP = %.4f" % (FP/N))
+        print("FN = %.4f" % (FN/N))
+        print("TN = %.4f" % (TN/N))
 
     # calculate desired measures
     acc = (TP+TN)/N
@@ -68,11 +69,12 @@ def printMeasures(x, y, scoreList, iteration, verbose=False):
     scoreList[6][iteration] = rec
     scoreList[7][iteration] = fm
 
-    # 
-    # print("Accuracy = %.4f" % acc)
-    # print("Precision = %.4f" % pre)
-    # print("Recall = %.4f" % rec)
-    # print("F = %.4f" % fm)
+    if verbose
+        print("Accuracy = %.4f" % acc)
+        print("Precision = %.4f" % pre)
+        print("Recall = %.4f" % rec)
+        print("F = %.4f" % fm)
+        
     print("%d & %.4f & %.4f & %.4f & %.4f & %.4f & %.4f & %.4f & %.4f\\\\" % (iteration, TP/N, FP/N, FN/N, TN/N, acc,
                                                                               pre, rec, fm))
     print()
