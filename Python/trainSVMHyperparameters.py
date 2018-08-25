@@ -1,30 +1,10 @@
 # Learn hyperparameters for the SVM model
-import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import LinearSVC
 from sklearn.model_selection import GridSearchCV
 from scipy.sparse import hstack
-import numpy as np
 from sklearn import preprocessing
-
-allSatire = pd.read_csv('./Data/allSatire.csv')
-allSatire = allSatire.drop(['Unnamed: 0'], axis=1)
-
-allSerious = pd.read_csv('./Data/allSerious.csv')
-allSerious = allSerious.drop(['Unnamed: 0'], axis=1)
-
-N = len(allSatire.Body)
-Ntrain = int(0.85 * N)
-shuffler = np.random.permutation(N)
-satireTrain = allSatire.loc[shuffler[:Ntrain]]
-
-N = len(allSerious.Body)
-Ntrain = int(0.85 * N)
-shuffler = np.random.permutation(N)
-seriousTrain = allSerious.loc[shuffler[:Ntrain]]
-
-train = pd.concat([seriousTrain, satireTrain], ignore_index=True).dropna(how='any', subset={'Body'}).sample(frac=1)
 
 vectorizer = CountVectorizer(stop_words='english', binary=True)
 binaryBog = vectorizer.fit_transform(train.Body)

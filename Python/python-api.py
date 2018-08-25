@@ -1,7 +1,7 @@
 """
 python-api.py
 Author: Adam Hare
-Last Updated: 23 August 2018
+Last Updated: 24 August 2018
 
 Description:
 This file contains a few higher level functions to handle data parsing, SVM testing, SVM hyper-parameter testing, and
@@ -178,3 +178,22 @@ def parse_data(filename, write_to_file=False, target_file='', count_profane=Fals
 
     # Return `DataFrame` object
     return data
+
+
+"""
+This function learns hyper-parameters for the SVM for a specific data set and a specific range of parameters.
+This function makes heavy use of standard sklearn functions.
+    Parameters:
+
+        training_files - A list of names of the csv files from which to read the initial training data. These files
+                         will be combined to form the training set.
+                         
+        training_percentage - The percentage of the available training data to be trained on. One may wish to reduce 
+                              this to decrease compute time. Valid from 0 to 1, inclusive, although a value of zero will 
+                              not produce meaningful results. Generally, this should be as close to 1 as resources will
+                              allow. Default is 1.
+
+
+    Returns:
+        This function returns a `pandas` `DataFrame` object with the desired parsed fields added.
+"""

@@ -1,7 +1,7 @@
 """
 parserLib.py
 Author: Adam Hare
-Last Updated: 23 August 2018
+Last Updated: 24 August 2018
 
 Description:
 This file contains a number of functions used to parse data from the csv files. Some of these functions may be very
