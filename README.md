@@ -7,9 +7,9 @@ This repository contains the final report, some of the code, and data used in my
 
 Raw data files and code for processing them is omitted. Included instead is allData.zip, which contains allSatire.csv and allSerious.csv. These files contain all satirical and all serious news articles used as data for this project. Also included are train.csv and test.csv which were used for training and testing satire against serious news in the project. Note that these are two divisions of the same data.
 
-The functions in this repository are meant to be somewhat flexible in terms of data, but require the first column to be an index of the data as well as columns named "Date", "Body", and "Title". All other columns will be added in parsing. If the data you would like to use does not have an index, you can change the `pandas  csv_read` to generate an index for you. Many functions will work even without some of the three core columns, please read comments to determine which functions require which columns.
+The functions in this repository are meant to be somewhat flexible in terms of data, but require the first column to be an index of the data as well as columns named "Date", "Body", and "Title". All other columns will be added in parsing. If the data you would like to use does not have an column indicating an index, you can change the `pandas  csv_read` to generate an index for you. Many functions will work even without some of the three core columns; please read comments to determine which functions require which columns.
 
-Some code has been refactored from what was used in the actual testing to be more readable and modular. These changes have resulted in a significant departure from the original code. This code is mostly included for reference and to give an idea of the procedures used in this thesis.
+Almost all of this code has been refactored from what was used in the actual testing to be more readable and modular. These changes have resulted in a significant departure from the original code. This code is mostly included for reference and to give an idea of the procedures used in this thesis. This also accounts for discrepancies between code samples in the thesis and what is provided directly in this repository.
 
 # Dependencies
 This thesis makes use of several commonly used Python libraries, specifically:
