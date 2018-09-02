@@ -1,7 +1,7 @@
 """
 classifierLib.py
-Author: Adam Hare
-Last Updated: 24 August 2018
+Author: Adam Hare <adamth@alumni.princeton.edu>
+Last Updated: 2 September 2018
 
 Description:
 This file contains a number of functions used to train and evaluate data using the machine learning classifiers.
@@ -12,6 +12,11 @@ on where the programs are being run.
 
 import numpy as np
 import pandas as pd
+
+from scipy.sparse import hstack
+from sklearn import preprocessing
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 # Given a `pandas` `DataFrame`, this function splits it into two parts based on the provided percentage and returns
@@ -62,3 +67,41 @@ def merge_data(file_names, percentage, shuffle):
     except IndexError:
         print('Must include at least one data file.')
 
+
+# This function creates and returns a weighted bag of words from the data based on the provided parameters. data is
+# expected to be a single column from a `pandas` `DataFrame`, typically "Body" in this use case.
+# is_tf is a boolean which if `True` creates the bag of words using a TF-IDF weighting and if `False` creates the bag of
+# words with a simple count weighting. use_stop_words is a boolean which removes English "stop words" if `True` and
+# nothing if `False`. is_binary is a boolean which sets all non-zero counts to 1 when `True`. If is_tf is
+# `False`, this results in a vector of ones and zeros only. If is_tf is `True`, the TF-IDF weightings will
+#  not be either zero or one as this parameter only changes how counts are considered.
+def get_bag_of_words(data, is_tf, use_stop_words, is_binary):
+    # Using TF-IDF weighting
+    if is_tf:
+        if use_stop_words:
+            vectorizer = TfidfVectorizer(stop_words='english', binary=is_binary)
+        else:
+            vectorizer = TfidfVectorizer(binary=is_binary)
+    # Using standard word count weighting
+    else:
+        if use_stop_words:
+            vectorizer = CountVectorizer(stop_words='english', binary=is_binary)
+        else:
+            vectorizer = CountVectorizer(binary=is_binary)
+    return vectorizer.fit_transform(data)
+
+
+# This function scales and returns the appropriate feature columns. Here, data is the `pandas` `DataFrame` containing
+# all of the data and features is a list of the desired column names to be scaled. additional_features allows the
+# specification of additional feature columns that are not included in the data `DataFrame`.
+def scale_features(data, feature_list, additional_features):
+    # Ensure we have some additional features to scale.
+    if feature_list:
+        features = preprocessing.scale(data[list(feature_list)].values)
+        return hstack(additional_features, features)
+    # Otherwise, just return the additional features. Note that this list may be empty, in which case the function
+    # returns an empty list.
+    return additional_features
+
+
+# print(scale_features(merge_data(["../Data/smallTestSample.csv"], 1, True), [], []))

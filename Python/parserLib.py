@@ -1,6 +1,6 @@
 """
 parserLib.py
-Author: Adam Hare
+Author: Adam Hare <adamth@alumni.princeton.edu>
 Last Updated: 24 August 2018
 
 Description:

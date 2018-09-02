@@ -1,7 +1,7 @@
 """
 python-api.py
-Author: Adam Hare
-Last Updated: 24 August 2018
+Author: Adam Hare <adamth@alumni.princeton.edu>
+Last Updated: 2 September 2018
 
 Description:
 This file contains a few higher level functions to handle data parsing, SVM testing, SVM hyper-parameter testing, and
@@ -14,7 +14,8 @@ import pandas as pd
 import re
 from textstat.textstat import textstat
 
-from parserLib import get_profanity_count, get_encoded_date, get_avg_syl_count, get_link_count
+from classifierLib import get_bag_of_words, merge_data
+from parserLib import get_avg_syl_count, get_encoded_date, get_link_count, get_profanity_count
 
 
 """
@@ -35,6 +36,10 @@ formatted as in one of the provided csv files, although not all fields are neede
                         
         target_file - If specified, a target file to write to. Otherwise, no file is written. Both write_to_file and
                       target_file can write in a given call.
+                      
+        run_all - A boolean value indicating whether or not to build all features. Overrides all subsequent parameters
+                  except profane_dict_file and date_range. By default `False`, meaning that all other parameters are
+                  followed as specified.
                       
         count_profane - If `True`, count the number of profane words and place in 'profanityCount' column.
         
@@ -97,11 +102,21 @@ formatted as in one of the provided csv files, although not all fields are neede
 """
 
 
-def parse_data(filename, write_to_file=False, target_file='', count_profane=False, profane_dict_file='profaneWords.csv',
-               is_satire=-1, encode_date=False, date_range=range(2010, 2018), title_word_count=False, word_count=False,
-               title_syl_count=False, body_syl_count=False, sentence_count=False, link_count=False, twitter_count=False,
-               title_fr_score=False, fr_score=False, title_gf_score=False, gf_score=False, title_ari_score=False,
-               ari_score=False):
+def parse_data(filename, write_to_file=False, target_file='', run_all=False, count_profane=False,
+               profane_dict_file='profaneWords.csv', is_satire=-1, encode_date=False, date_range=range(2010, 2018),
+               title_word_count=False, word_count=False, title_syl_count=False, body_syl_count=False,
+               sentence_count=False, link_count=False, twitter_count=False, title_fr_score=False, fr_score=False,
+               title_gf_score=False, gf_score=False, title_ari_score=False, ari_score=False):
+
+    # Check to see if the run_all flag has been set to True.
+    if run_all:
+        print("Warning: all features to be run. This may overwrite values in existing columns.")
+        return parse_data(filename, write_to_file=write_to_file, target_file=target_file, count_profane=True,
+                          profane_dict_file=profane_dict_file, is_satire=is_satire, encode_date=True,
+                          date_range=date_range, title_word_count=True, word_count=True, title_syl_count=True,
+                          body_syl_count=True, sentence_count=True, link_count=True, twitter_count=True,
+                          title_fr_score=True, fr_score=True, title_gf_score=True, gf_score=True, title_ari_score=True,
+                          ari_score=True)
 
     # Read the data from the csv file.
     data = pd.read_csv(filename, index_col=0)
@@ -192,8 +207,45 @@ This function makes heavy use of standard sklearn functions.
                               this to decrease compute time. Valid from 0 to 1, inclusive, although a value of zero will 
                               not produce meaningful results. Generally, this should be as close to 1 as resources will
                               allow. Default is 1.
+                              
+        shuffle - A boolean value indicating whether or not to shuffle the data. Default is `True`, meaning the data is
+                  shuffled.
+                  
+        label_column - A string indicating the name of the of the column to be used as the labels for the data. By 
+                       default, this is "isSatire".
+                       
+        bag_of_words_column - A string indicating the name of the column to be used as the source for the bag of words
+                              data. By default, this is "Body".
+                              
+        is_tf - A boolean value indicating whether or not to use the TF-IDF weighting. Default is `False`, which means
+                that a simple word count will be used instead.
+        
+        use_stop_words - A boolean value indicating whether or not to use English "stop words." Default is `True`, 
+                         which means that common English stop words will be removed from analysis.
+        
+        is_binary - A boolean value indicating whether or not to use a binary weighting. Default is `True`, which means
+                    that all words will be given a value of 0 if they do not appear in a given text and 1 if they appear
+                    at least once.
 
 
     Returns:
         This function returns a `pandas` `DataFrame` object with the desired parsed fields added.
 """
+
+
+def train_hyperparameters(training_files, training_percentage=1, shuffle=True, label_column="isSatire",
+                          bag_of_words_column="Body", is_tf=False, use_stop_words=True, is_binary=True):
+    # Read data from specified files
+    data = merge_data(training_files, training_percentage, shuffle)
+
+    # Get data labels
+    labels = data[label_column].values
+
+    # Build the bag of words
+    bag_of_words = get_bag_of_words(data[bag_of_words_column], is_tf, use_stop_words, is_binary)
+
+    return "Done"
+
+
+print(parse_data("../Data/smallTestSample.csv", write_to_file=False, target_file="../Data/testWithFeatures.csv",
+                 run_all=True, is_satire=0, date_range=range(1984, 2019)))
