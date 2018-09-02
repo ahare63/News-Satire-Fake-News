@@ -235,17 +235,14 @@ This function makes heavy use of standard sklearn functions.
 
 def train_hyperparameters(training_files, training_percentage=1, shuffle=True, label_column="isSatire",
                           bag_of_words_column="Body", is_tf=False, use_stop_words=True, is_binary=True):
-    # Read data from specified files
+    # Read data from specified files.
     data = merge_data(training_files, training_percentage, shuffle)
 
-    # Get data labels
+    # Get data labels.
     labels = data[label_column].values
 
-    # Build the bag of words
+    # Build the bag of words.
     bag_of_words = get_bag_of_words(data[bag_of_words_column], is_tf, use_stop_words, is_binary)
 
-    return "Done"
+    # Extract the relevant features.
 
-
-print(parse_data("../Data/smallTestSample.csv", write_to_file=False, target_file="../Data/testWithFeatures.csv",
-                 run_all=True, is_satire=0, date_range=range(1984, 2019)))
