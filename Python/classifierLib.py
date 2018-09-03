@@ -23,6 +23,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 # both as a tuple. Valid values for percentage range from 0 to 1 inclusive. If shuffle is `True`, all data is shuffled,
 # otherwise it is returned in the order it was read.
 def split_data(data, percentage, shuffle):
+    # Ensure the percentage is a valid decimal.
     if percentage < 0 or percentage > 1:
         raise ValueError('Percentage must be between zero and one.')
     else:
@@ -95,13 +96,11 @@ def get_bag_of_words(data, is_tf, use_stop_words, is_binary):
 # all of the data and features is a list of the desired column names to be scaled. additional_features allows the
 # specification of additional feature columns that are not included in the data `DataFrame`.
 def scale_features(data, feature_list, additional_features):
-    # Ensure we have some additional features to scale.
+    # Ensure we have some features from the data to scale.
     if feature_list:
         features = preprocessing.scale(data[list(feature_list)].values)
-        return hstack(additional_features, features)
+        return hstack([additional_features, features])
     # Otherwise, just return the additional features. Note that this list may be empty, in which case the function
     # returns an empty list.
     return additional_features
 
-
-# print(scale_features(merge_data(["../Data/smallTestSample.csv"], 1, True), [], []))

@@ -7,14 +7,7 @@ Description:
 This script runs the SVM model on Princeton's Nobel cluster.
 """
 
-
-import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import LinearSVC
-from scipy.sparse import hstack
-import numpy as np
-from sklearn import preprocessing
 
 # print some important measures (accuracy, precision, recall, F measure)
 # here, x is a list of the predicted values returned from the SVM, y is a list of the "ground truth" values
