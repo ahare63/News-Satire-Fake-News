@@ -98,10 +98,8 @@ def scale_features(data, feature_list, additional_features):
     # Ensure we have some additional features to scale.
     if feature_list:
         features = preprocessing.scale(data[list(feature_list)].values)
-        return hstack(additional_features, features)
+        return hstack([additional_features, features])
     # Otherwise, just return the additional features. Note that this list may be empty, in which case the function
     # returns an empty list.
     return additional_features
 
-
-# print(scale_features(merge_data(["../Data/smallTestSample.csv"], 1, True), [], []))

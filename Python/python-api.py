@@ -12,9 +12,11 @@ from nltk.tokenize import word_tokenize, sent_tokenize
 import numpy as np
 import pandas as pd
 import re
+from sklearn.model_selection import GridSearchCV
+from sklearn.svm import LinearSVC
 from textstat.textstat import textstat
 
-from classifierLib import get_bag_of_words, merge_data
+from classifierLib import get_bag_of_words, merge_data, scale_features
 from parserLib import get_avg_syl_count, get_encoded_date, get_link_count, get_profanity_count
 
 
@@ -48,9 +50,9 @@ formatted as in one of the provided csv files, although not all fields are neede
                             contain only regular expressions of what will be identified as profane words. See included 
                             file `profaneWords.csv` for an example.
                             
-        is_satire - If specified, indicates whether or not an article is satire. Default is -1, which skips adding a
+        is_satire - If specified, indicates whether or not an article is satire. Default is `None`, which skips adding a
                     label. If 0, every article in the file is given a label of 0 for non-satirical. If 1, every article
-                    is given a label of 1 for satirical. Throws an error if given something other than -1, 0, or 1.
+                    is given a label of 1 for satirical. Throws an error if given something other than 0 or 1.
                     Writes to 'isSatire' column.
                     
         encode_date - A boolean value indicating whether or not to do one-hot encoding on the date field. `True` does
@@ -102,8 +104,8 @@ formatted as in one of the provided csv files, although not all fields are neede
 """
 
 
-def parse_data(filename, write_to_file=False, target_file='', run_all=False, count_profane=False,
-               profane_dict_file='profaneWords.csv', is_satire=-1, encode_date=False, date_range=range(2010, 2018),
+def parse_data(filename, write_to_file=False, target_file=None, run_all=False, count_profane=False,
+               profane_dict_file='profaneWords.csv', is_satire=None, encode_date=False, date_range=range(2010, 2018),
                title_word_count=False, word_count=False, title_syl_count=False, body_syl_count=False,
                sentence_count=False, link_count=False, twitter_count=False, title_fr_score=False, fr_score=False,
                title_gf_score=False, gf_score=False, title_ari_score=False, ari_score=False):
@@ -126,10 +128,8 @@ def parse_data(filename, write_to_file=False, target_file='', run_all=False, cou
         data['profanityCount'] = get_profanity_count(data, profane_dict_file)
 
     # Add satirical label.
-    if is_satire == 0 or is_satire == 1:
+    if is_satire is not None:
         data['isSatire'] = np.repeat(is_satire, len(data.Body))
-    elif is_satire != -1:
-        raise ValueError('Invalid value for is_satire: should be -1, 0, or 1')
 
     # Do one-hot encoding on the date.
     if encode_date:
@@ -188,7 +188,7 @@ def parse_data(filename, write_to_file=False, target_file='', run_all=False, cou
         data.to_csv(filename)
 
     # Write to other file if specified by target_file.
-    if target_file != '':
+    if target_file is not None:
         data.to_csv(target_file)
 
     # Return `DataFrame` object
@@ -197,7 +197,7 @@ def parse_data(filename, write_to_file=False, target_file='', run_all=False, cou
 
 """
 This function learns hyper-parameters for the SVM for a specific data set and a specific range of parameters.
-This function makes heavy use of standard sklearn functions.
+This function makes heavy use of standard `sk-learn` functions.
     Parameters:
 
         training_files - A list of names of the csv files from which to read the initial training data. These files
@@ -226,6 +226,19 @@ This function makes heavy use of standard sklearn functions.
         is_binary - A boolean value indicating whether or not to use a binary weighting. Default is `True`, which means
                     that all words will be given a value of 0 if they do not appear in a given text and 1 if they appear
                     at least once.
+                    
+        feature_columns - A list of strings indicating column names to be used as features. They will all be normalized.
+                          By default, this is all values used in testing. Pass an empty list to include no additional
+                          features.
+                          
+        params - Hyperparameters to be tested. By default, these are `class_weight` as "balanced" and `None` and `C`
+                 from 10^-5 to 10^3. Please refer to the `sk-learn` documentation for more information.
+                 
+        scoring - The metrics to be used for judging classifier efficiency, as specified in `sk-learn` documentation.
+                  The default is 'accuracy'.
+                  
+        verbose - A boolean value indicating whether or not to print all of the data returned from the results. Default
+                  is `False`, which only prints the best estimator.
 
 
     Returns:
@@ -233,8 +246,10 @@ This function makes heavy use of standard sklearn functions.
 """
 
 
-def train_hyperparameters(training_files, training_percentage=1, shuffle=True, label_column="isSatire",
-                          bag_of_words_column="Body", is_tf=False, use_stop_words=True, is_binary=True):
+def train_svm_hyperparameters(training_files, training_percentage=1, shuffle=True, label_column="isSatire",
+                              bag_of_words_column="Body", is_tf=False, use_stop_words=True, is_binary=True,
+                              feature_columns=None, params=None, scoring='accuracy', verbose=False):
+
     # Read data from specified files.
     data = merge_data(training_files, training_percentage, shuffle)
 
@@ -245,4 +260,26 @@ def train_hyperparameters(training_files, training_percentage=1, shuffle=True, l
     bag_of_words = get_bag_of_words(data[bag_of_words_column], is_tf, use_stop_words, is_binary)
 
     # Extract the relevant features.
+    if feature_columns is None:
+        feature_columns = ['ARI', 'FR', 'GF', 'avgSyl', 'linkCount', 'profanityCount', 'senCount', 'titleARI',
+                           'titleAvgSyl', 'titleFR', 'titleGF', 'titleWordCount', 'twitChar', 'wordCount']
+    features = scale_features(data, feature_columns, bag_of_words)
+
+    # Set the parameters to be tried.
+    if params is None:
+        params = {'class_weight': ['balanced', None],
+                  'C': [10**-5, 10**-4, 10**-3, 10**-2, 10**-1, 1, 10, 10**2, 10**3]}
+
+    # Use the sk-learn library to find the best hyperparameters.
+    svc = LinearSVC()
+    classifier = GridSearchCV(svc, params, scoring=scoring)
+    classifier.fit(features, labels)
+
+    # Print the results.
+    if verbose:
+        print(classifier.cv_results_)
+        print("Best parameters: ", classifier.best_params_)
+        print("Best score: ", classifier.best_score_)
+
+    print("Best estimator: ", classifier.best_estimator_)
 
