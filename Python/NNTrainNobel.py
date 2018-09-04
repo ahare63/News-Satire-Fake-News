@@ -13,8 +13,6 @@ Even on the Nobel cluster, these calculations are slow and calculation-intensive
 
 from __future__ import division
 import pandas as pd
-from keras.preprocessing.text import Tokenizer
-from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
 from keras.layers.embeddings import Embedding
 from keras.layers import Dropout, Conv1D, LSTM, Dense

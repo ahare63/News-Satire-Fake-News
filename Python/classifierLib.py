@@ -75,21 +75,27 @@ def merge_data(file_names, percentage, shuffle):
 # words with a simple count weighting. use_stop_words is a boolean which removes English "stop words" if `True` and
 # nothing if `False`. is_binary is a boolean which sets all non-zero counts to 1 when `True`. If is_tf is
 # `False`, this results in a vector of ones and zeros only. If is_tf is `True`, the TF-IDF weightings will
-#  not be either zero or one as this parameter only changes how counts are considered.
-def get_bag_of_words(data, is_tf, use_stop_words, is_binary):
+# not be either zero or one as this parameter only changes how counts are considered. This function also returns the
+# vectorizer used to create the bag of words.
+def get_bag_of_words(data, vectorizer, is_tf, use_stop_words, is_binary):
+    # Check if we got a vectorizer, in which case use it and return.
+    if vectorizer is not None:
+        return vectorizer.transform(data), vectorizer
+
     # Using TF-IDF weighting
     if is_tf:
         if use_stop_words:
             vectorizer = TfidfVectorizer(stop_words='english', binary=is_binary)
         else:
             vectorizer = TfidfVectorizer(binary=is_binary)
+
     # Using standard word count weighting
     else:
         if use_stop_words:
             vectorizer = CountVectorizer(stop_words='english', binary=is_binary)
         else:
             vectorizer = CountVectorizer(binary=is_binary)
-    return vectorizer.fit_transform(data)
+    return vectorizer.fit_transform(data), vectorizer
 
 
 # This function scales and returns the appropriate feature columns. Here, data is the `pandas` `DataFrame` containing

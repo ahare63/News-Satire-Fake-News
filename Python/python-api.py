@@ -8,6 +8,9 @@ This file contains a few higher level functions to handle data parsing, SVM test
 CLSTM testing.
 """
 
+from enum import Enum
+from keras.preprocessing.sequence import pad_sequences
+from keras.preprocessing.text import Tokenizer
 from nltk.tokenize import word_tokenize, sent_tokenize
 import numpy as np
 import pandas as pd
@@ -196,79 +199,204 @@ def parse_data(filename, write_to_file=False, target_file=None, run_all=False, c
 
 
 """
-This function learns hyper-parameters for the SVM for a specific data set and a specific range of parameters.
-This function makes heavy use of standard `sk-learn` functions.
-    Parameters:
+This function takes a list of files as input. It reads those files into `pandas` `DataFrame` objects and combines them.
 
-        training_files - A list of names of the csv files from which to read the initial training data. These files
-                         will be combined to form the training set.
-                         
-        training_percentage - The percentage of the available training data to be trained on. One may wish to reduce 
-                              this to decrease compute time. Valid from 0 to 1, inclusive, although a value of zero will 
-                              not produce meaningful results. Generally, this should be as close to 1 as resources will
-                              allow. Default is 1.
-                              
-        shuffle - A boolean value indicating whether or not to shuffle the data. Default is `True`, meaning the data is
-                  shuffled.
-                  
-        label_column - A string indicating the name of the of the column to be used as the labels for the data. By 
-                       default, this is "isSatire".
-                       
-        bag_of_words_column - A string indicating the name of the column to be used as the source for the bag of words
-                              data. By default, this is "Body".
-                              
-        is_tf - A boolean value indicating whether or not to use the TF-IDF weighting. Default is `False`, which means
-                that a simple word count will be used instead.
-        
-        use_stop_words - A boolean value indicating whether or not to use English "stop words." Default is `True`, 
-                         which means that common English stop words will be removed from analysis.
-        
-        is_binary - A boolean value indicating whether or not to use a binary weighting. Default is `True`, which means
-                    that all words will be given a value of 0 if they do not appear in a given text and 1 if they appear
-                    at least once.
-                    
-        feature_columns - A list of strings indicating column names to be used as features. They will all be normalized.
-                          By default, this is all values used in testing. Pass an empty list to include no additional
-                          features.
-                          
-        params - Hyperparameters to be tested. By default, these are `class_weight` as "balanced" and `None` and `C`
-                 from 10^-5 to 10^3. Please refer to the `sk-learn` documentation for more information.
+Parameters:
+    files - A list of paths to the files to be read.
+    
+    percentage - The percentage of each file to be read. By default 1, which reads all available data. Should range
+                 between 0 and 1. Set this to a lower number for debugging classifiers.
                  
-        scoring - The metrics to be used for judging classifier efficiency, as specified in `sk-learn` documentation.
-                  The default is 'accuracy'.
-                  
-        verbose - A boolean value indicating whether or not to print all of the data returned from the results. Default
-                  is `False`, which only prints the best estimator.
-
-
-    Returns:
-        This function returns a `pandas` `DataFrame` object with the desired parsed fields added.
+    shuffle - A boolean value indicating whether or not to shuffle the data. Default is `True`, which shuffles all data.
 """
 
 
-def train_svm_hyperparameters(training_files, training_percentage=1, shuffle=True, label_column="isSatire",
-                              bag_of_words_column="Body", is_tf=False, use_stop_words=True, is_binary=True,
-                              feature_columns=None, params=None, scoring='accuracy', verbose=False):
+def from_files(files, percentage=1, shuffle=True):
+    merge_data(files, percentage, shuffle)
 
-    # Read data from specified files.
-    data = merge_data(training_files, training_percentage, shuffle)
+
+"""
+This function preprocesses the data, preparing it for use by an SVM classifier. It returns a `pandas` `DataFrame` 
+containing the processed data, a `numpy` `ndarray` of labels for that data, and the vectorizer used to build the bag of
+words.
+    Parameters:
+
+        data - A `pandas` `DataFrame` object containing the data to be preprocessed.
+        
+        vectorizer - If it exists, the vectorizer used on the training data. This is to ensure that the training and 
+                     testing data were built using the same vectorizer. When supplied, the function assumes that this is
+                     testing data and builds using the already established vectorizer. By default this is `None`, which
+                     causes the function to assume this is testing data and build a new vectorizer. Including this will
+                     cause the parameters `is_tf`, `use_stop_words`, and `is_binary` to be ignored if supplied because
+                     they will already have been set when the vectorizer was initialized.
+
+        label_column - A string indicating the name of the of the column to be used as the labels for the data. By 
+                       default, this is "isSatire".
+
+        bag_of_words_column - A string indicating the name of the column to be used as the source for the bag of words
+                              data. By default, this is "Body".
+
+        is_tf - A boolean value indicating whether or not to use the TF-IDF weighting. Default is `False`, which means
+                that a simple word count will be used instead.
+
+        use_stop_words - A boolean value indicating whether or not to use English "stop words." Default is `True`, 
+                         which means that common English stop words will be removed from analysis.
+
+        is_binary - A boolean value indicating whether or not to use a binary weighting. Default is `True`, which means
+                    that all words will be given a value of 0 if they do not appear in a given text and 1 if they appear
+                    at least once.
+
+        feature_columns - A list of strings indicating column names to be used as features. They will all be normalized.
+                          By default, this is all values used in testing. Pass an empty list to include no additional
+                          features.
+
+        params - Hyperparameters to be tested. By default, these are `class_weight` as "balanced" and `None` and `C`
+                 from 10^-5 to 10^3. Please refer to the `sk-learn` documentation for more information.
+
+
+    Returns:
+        This function returns a `pandas` `DataFrame` containing the processed data and a `numpy` `ndarray` of labels 
+        for that data.
+"""
+
+
+def preprocess_svm(data, vectorizer=None, label_column="isSatire", bag_of_words_column="Body", is_tf=False,
+                   use_stop_words=True, is_binary=True, feature_columns=None):
 
     # Get data labels.
     labels = data[label_column].values
 
     # Build the bag of words.
-    bag_of_words = get_bag_of_words(data[bag_of_words_column], is_tf, use_stop_words, is_binary)
+    bag_of_words, vectorizer = get_bag_of_words(data[bag_of_words_column], vectorizer, is_tf, use_stop_words, is_binary)
 
     # Extract the relevant features.
     if feature_columns is None:
         feature_columns = ['ARI', 'FR', 'GF', 'avgSyl', 'linkCount', 'profanityCount', 'senCount', 'titleARI',
                            'titleAvgSyl', 'titleFR', 'titleGF', 'titleWordCount', 'twitChar', 'wordCount']
-    features = scale_features(data, feature_columns, bag_of_words)
+    return scale_features(data, feature_columns, bag_of_words), labels, vectorizer
+
+
+"""
+This function preprocesses the data, preparing it for use by the CLSTM classifier. It returns a `pandas` `DataFrame` 
+containing the processed data, a `numpy` `ndarray` of labels for that data, the tokenizer, and the max_length parameter.
+    Parameters:
+
+        data - A `pandas` `DataFrame` object containing the data to be preprocessed.
+        
+        tokenizer - A tokenizer to use to preprocess the data. If not included, this function will assume the data is
+                    for training and build a new tokenizer. If provided, the function will assume this is testing data
+                    and build based on the provided tokenizer. It is important that the parameters `append_title`, 
+                    `max_words`, and `max_length` are the same for training and testing. By default this is `None` and a 
+                    new tokenizer is built.
+
+        label_column - A string indicating the name of the of the column to be used as the labels for the data. By 
+                       default, this is "isSatire".
+                       
+        append_title - A boolean value indicating whether or not to append the article title to the front of the body
+                       so that it is included in the analysis. By default, this is `True`, so the title is appended.
+
+        max_words - An int indicating the maximum size of the dictionary used in tokenization. The top max_words used
+                    in the corpus (based on frequency) will be retained. By default, this is `None`, which uses all
+                    available words. For a sufficiently large corpus, this can dramatically and unnecessarily increase
+                    compute time. Recommended max size for the corpus used in this thesis about 20,000.
+                    
+        max_length - The maximum length of an article to consider. Articles longer than this will be truncated and
+                     shorter articles will be padded with null. By default this is the length of the longest article.
+                     Again, for a significantly large corpus this increases compute time dramatically without a
+                     performance benefit. Look at the distribution of article length in your corpus to set. Recommended
+                     at 4000 for the corpus used in this thesis.
+
+
+    Returns:
+    It returns a `pandas` `DataFrame` containing the processed data, a `numpy` `ndarray` of labels for that data, the 
+    tokenizer, and the max_length parameter. max_length is returned because if it is not set manually it becomes the
+    longest article length in the training data. This number must be the same for both training and testing, so this
+    allows recovery for use on the testing data.
+"""
+
+
+def preprocess_clstm(data, tokenizer=None, label_column="isSatire", append_title=True, max_words=None, max_length=None):
+
+    # Get data labels.
+    labels = data[label_column].values
+
+    # Append the title to the body if specified.
+    if append_title:
+        data['Body'] = data.apply(lambda x: x.Title + ". " + x.Body, axis=1)
+
+    # Check if we already have a tokenizer to use.
+    if tokenizer is not None:
+        as_sequence = tokenizer.texts_to_sequences(data.Body)
+        test = np.array(pad_sequences(as_sequence, maxlen=max_length))  # Pad for use with CLSTM.
+        test[test > max_words] = 0  # Replace any words not in the dictionary with nulls.
+        return test, labels, tokenizer, max_length
+
+    # Otherwise, build a new tokenizer.
+    tokenizer = Tokenizer(num_words=max_words)
+    tokenizer.fit_on_texts(data.Body)
+    as_sequence = tokenizer.texts_to_sequences(data.Body)
+
+    # If not provided, calculate the maximum length.
+    if max_length is None:
+        max_length = len(max(as_sequence, key=len))
+
+    # Pad for use with CLSTM and return.
+    return np.array(pad_sequences(as_sequence, maxlen=max_length)), labels, tokenizer, max_length
+
+
+"""
+This function learns hyper-parameters for the SVM for a specific data set and a specific range of parameters.
+This function makes heavy use of standard `sk-learn` functions.
+    Parameters:
+        data - A `pandas` `DataFrame` object containing the data to be preprocessed.
+
+        label_column - A string indicating the name of the of the column to be used as the labels for the data. By 
+                       default, this is "isSatire".
+
+        bag_of_words_column - A string indicating the name of the column to be used as the source for the bag of words
+                              data. By default, this is "Body".
+
+        is_tf - A boolean value indicating whether or not to use the TF-IDF weighting. Default is `False`, which means
+                that a simple word count will be used instead.
+
+        use_stop_words - A boolean value indicating whether or not to use English "stop words." Default is `True`, 
+                         which means that common English stop words will be removed from analysis.
+
+        is_binary - A boolean value indicating whether or not to use a binary weighting. Default is `True`, which means
+                    that all words will be given a value of 0 if they do not appear in a given text and 1 if they appear
+                    at least once.
+
+        feature_columns - A list of strings indicating column names to be used as features. They will all be normalized.
+                          By default, this is all values used in testing. Pass an empty list to include no additional
+                          features.
+
+        params - Hyperparameters to be tested. By default, these are `class_weight` as "balanced" and `None` and `C`
+                 from 10^-5 to 10^3. Please refer to the `sk-learn` documentation for more information.
+
+        scoring - The metrics to be used for judging classifier efficiency, as specified in `sk-learn` documentation.
+                  The default is 'accuracy'.
+
+        verbose - A boolean value indicating whether or not to print all of the data returned from the results. Default
+                  is `False`, which only prints the best estimator.
+    Returns:
+        A dictionary of the hyperparameters found to fit best with this data. Also prints these results.
+"""
+
+
+def train_svm_hyperparameters(data, label_column="isSatire", bag_of_words_column="Body", is_tf=False,
+                              use_stop_words=True, is_binary=True, feature_columns=None, params=None,
+                              scoring='accuracy', verbose=False):
+
+    # Do preprocessing on the data.
+    features, labels = preprocess_svm(data, label_column=label_column,
+                                      bag_of_words_column=bag_of_words_column, is_tf=is_tf,
+                                      use_stop_words=use_stop_words, is_binary=is_binary,
+                                      feature_columns=feature_columns)
 
     # Set the parameters to be tried.
     if params is None:
         params = {'class_weight': ['balanced', None],
-                  'C': [10**-5, 10**-4, 10**-3, 10**-2, 10**-1, 1, 10, 10**2, 10**3]}
+                  'C': [10 ** -5, 10 ** -4, 10 ** -3, 10 ** -2, 10 ** -1, 1, 10, 10 ** 2, 10 ** 3]}
 
     # Use the sk-learn library to find the best hyperparameters.
     svc = LinearSVC()
@@ -282,4 +410,71 @@ def train_svm_hyperparameters(training_files, training_percentage=1, shuffle=Tru
         print("Best score: ", classifier.best_score_)
 
     print("Best estimator: ", classifier.best_estimator_)
+    return classifier.best_params_
+
+
+"""
+This enum provides all of the possible types of classification supported by the classify_data function.
+"""
+
+
+class Classification(Enum):
+    SVM = 0    # This builds an SVM classifier on the provided data.
+    CLSTM = 1  # This builds a CLSTM classifier on the provided data.
+
+
+"""
+This function passes the preprocessed data to the appropriate classifier.
+    Parameters:
+
+        data - A `pandas` `DataFrame`, likely returned from either `preprocess_svm` or preprocess_nn` on which the
+               classification will be performed.
+        
+        labels - A `numpy` `ndarray` containing the labels for the data.
+                         
+        classification_type - A `Classification` enum indicating the type of classifier to be used.
+                          
+        params - Hyperparameters to be used in classification.
+                 
+    Returns:
+        This function returns a classifier trained on the provided data.
+"""
+
+
+# def classify_data(training_files, training_percentage=1, shuffle=True, label_column="isSatire",
+#                   bag_of_words_column="Body", is_tf=False, use_stop_words=True, is_binary=True, feature_columns=None,
+#                   params=None, scoring='accuracy', verbose=False):
+#
+#     # Read data from specified files.
+#     data = merge_data(training_files, training_percentage, shuffle)
+#
+#     # Get data labels.
+#     labels = data[label_column].values
+#
+#     # Build the bag of words.
+#     bag_of_words = get_bag_of_words(data[bag_of_words_column], is_tf, use_stop_words, is_binary)
+#
+#     # Extract the relevant features.
+#     if feature_columns is None:
+#         feature_columns = ['ARI', 'FR', 'GF', 'avgSyl', 'linkCount', 'profanityCount', 'senCount', 'titleARI',
+#                            'titleAvgSyl', 'titleFR', 'titleGF', 'titleWordCount', 'twitChar', 'wordCount']
+#     features = scale_features(data, feature_columns, bag_of_words)
+#
+#     # Set the parameters to be tried.
+#     if params is None:
+#         params = {'class_weight': ['balanced', None],
+#                   'C': [10**-5, 10**-4, 10**-3, 10**-2, 10**-1, 1, 10, 10**2, 10**3]}
+#
+#     # Use the sk-learn library to find the best hyperparameters.
+#     svc = LinearSVC()
+#     classifier = GridSearchCV(svc, params, scoring=scoring)
+#     classifier.fit(features, labels)
+#
+#     # Print the results.
+#     if verbose:
+#         print(classifier.cv_results_)
+#         print("Best parameters: ", classifier.best_params_)
+#         print("Best score: ", classifier.best_score_)
+#
+#     print("Best estimator: ", classifier.best_estimator_)
 
