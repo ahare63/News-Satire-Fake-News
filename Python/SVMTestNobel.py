@@ -7,12 +7,21 @@ Description:
 This script runs the SVM model on Princeton's Nobel cluster.
 """
 
+import keras.preprocessing as preprocessing
+import numpy as np
+import pandas as pd
 from sklearn.svm import LinearSVC
+from scipy.sparse import hstack
+from sklearn import preprocessing
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # print some important measures (accuracy, precision, recall, F measure)
 # here, x is a list of the predicted values returned from the SVM, y is a list of the "ground truth" values
 # scoreList is a structure for storing results to be used later, iteration indicates which iteration of the algorithm is being analyzed
 # verbose is a boolean which prints nicely formatted data if true or just the iteration and LaTeX formatted data if false
+
+
 def printMeasures(x, y, scoreList, iteration, verbose=False):
     # initialize variables
     TP = 0.0
@@ -43,7 +52,7 @@ def printMeasures(x, y, scoreList, iteration, verbose=False):
     scoreList[3][iteration] = TN/N
 
     # print the iteration number, optionally print the percentage of each classification type
-    if verbose
+    if verbose:
         print("Iteration = %d" % iteration)
         print("TP = %.4f" % (TP/N))
         print("FP = %.4f" % (FP/N))
@@ -62,7 +71,7 @@ def printMeasures(x, y, scoreList, iteration, verbose=False):
     scoreList[6][iteration] = rec
     scoreList[7][iteration] = fm
 
-    if verbose
+    if verbose:
         print("Accuracy = %.4f" % acc)
         print("Precision = %.4f" % pre)
         print("Recall = %.4f" % rec)

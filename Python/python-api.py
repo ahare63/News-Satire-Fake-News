@@ -1,14 +1,17 @@
 """
 python-api.py
 Author: Adam Hare <adamth@alumni.princeton.edu>
-Last Updated: 2 September 2018
+Last Updated: 4 September 2018
 
 Description:
 This file contains a few higher level functions to handle data parsing, SVM testing, SVM hyper-parameter testing, and
 CLSTM testing.
 """
 
-from enum import Enum
+from keras.callbacks import EarlyStopping
+from keras.layers import Dropout, Conv1D, LSTM, Dense
+from keras.layers.embeddings import Embedding
+from keras.models import Sequential
 from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer
 from nltk.tokenize import word_tokenize, sent_tokenize
@@ -19,7 +22,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from textstat.textstat import textstat
 
-from classifierLib import get_bag_of_words, merge_data, scale_features
+from classifierLib import config_cluster, get_bag_of_words, get_f_score, get_precision, get_recall, merge_data, \
+    scale_features
 from parserLib import get_avg_syl_count, get_encoded_date, get_link_count, get_profanity_count
 
 
@@ -388,10 +392,9 @@ def train_svm_hyperparameters(data, label_column="isSatire", bag_of_words_column
                               scoring='accuracy', verbose=False):
 
     # Do preprocessing on the data.
-    features, labels = preprocess_svm(data, label_column=label_column,
-                                      bag_of_words_column=bag_of_words_column, is_tf=is_tf,
-                                      use_stop_words=use_stop_words, is_binary=is_binary,
-                                      feature_columns=feature_columns)
+    features, labels, _ = preprocess_svm(data, label_column=label_column, bag_of_words_column=bag_of_words_column,
+                                         is_tf=is_tf, use_stop_words=use_stop_words, is_binary=is_binary,
+                                         feature_columns=feature_columns)
 
     # Set the parameters to be tried.
     if params is None:
@@ -414,17 +417,7 @@ def train_svm_hyperparameters(data, label_column="isSatire", bag_of_words_column
 
 
 """
-This enum provides all of the possible types of classification supported by the classify_data function.
-"""
-
-
-class Classification(Enum):
-    SVM = 0    # This builds an SVM classifier on the provided data.
-    CLSTM = 1  # This builds a CLSTM classifier on the provided data.
-
-
-"""
-This function passes the preprocessed data to the appropriate classifier.
+This function uses the provided data to build an SVM classifier.
     Parameters:
 
         data - A `pandas` `DataFrame`, likely returned from either `preprocess_svm` or preprocess_nn` on which the
@@ -432,7 +425,6 @@ This function passes the preprocessed data to the appropriate classifier.
         
         labels - A `numpy` `ndarray` containing the labels for the data.
                          
-        classification_type - A `Classification` enum indicating the type of classifier to be used.
                           
         params - Hyperparameters to be used in classification.
                  
@@ -441,40 +433,129 @@ This function passes the preprocessed data to the appropriate classifier.
 """
 
 
-# def classify_data(training_files, training_percentage=1, shuffle=True, label_column="isSatire",
-#                   bag_of_words_column="Body", is_tf=False, use_stop_words=True, is_binary=True, feature_columns=None,
-#                   params=None, scoring='accuracy', verbose=False):
-#
-#     # Read data from specified files.
-#     data = merge_data(training_files, training_percentage, shuffle)
-#
-#     # Get data labels.
-#     labels = data[label_column].values
-#
-#     # Build the bag of words.
-#     bag_of_words = get_bag_of_words(data[bag_of_words_column], is_tf, use_stop_words, is_binary)
-#
-#     # Extract the relevant features.
-#     if feature_columns is None:
-#         feature_columns = ['ARI', 'FR', 'GF', 'avgSyl', 'linkCount', 'profanityCount', 'senCount', 'titleARI',
-#                            'titleAvgSyl', 'titleFR', 'titleGF', 'titleWordCount', 'twitChar', 'wordCount']
-#     features = scale_features(data, feature_columns, bag_of_words)
-#
-#     # Set the parameters to be tried.
-#     if params is None:
-#         params = {'class_weight': ['balanced', None],
-#                   'C': [10**-5, 10**-4, 10**-3, 10**-2, 10**-1, 1, 10, 10**2, 10**3]}
-#
-#     # Use the sk-learn library to find the best hyperparameters.
-#     svc = LinearSVC()
-#     classifier = GridSearchCV(svc, params, scoring=scoring)
-#     classifier.fit(features, labels)
-#
-#     # Print the results.
-#     if verbose:
-#         print(classifier.cv_results_)
-#         print("Best parameters: ", classifier.best_params_)
-#         print("Best score: ", classifier.best_score_)
-#
-#     print("Best estimator: ", classifier.best_estimator_)
+def build_svm(data, labels, params):
+
+    # Build using the specified parameters.
+    svc = LinearSVC(params)
+
+    # Fit on the provided data and return.
+    return svc.fit(data, labels)
+
+
+"""
+This function uses the provided data to build a CLSTM classifier. The default values provided reflect the best 
+performance  on the data set used for this thesis.
+    Parameters:
+
+        data - A `pandas` `DataFrame`, likely returned from either `preprocess_svm` or preprocess_nn` on which the
+               classification will be performed.
+
+        labels - A `numpy` `ndarray` containing the labels for the data.
+
+
+        max_words - The max_words of the embedding, as specified in preprocessing.
+        
+        max_length - The maximum length of the embedding, as specified in preprocessing.
+        
+        is_cluster - A boolean value indicating whether or not to configure this for a cluster computer. Default is
+                     `False` and the configuration is not changed.
+                     
+        embedding_size - An integer indicating the size of the embedding layer. Default is 100.
+        
+        dropout - A decimal indicating the dropout value. Default is 0.3.
+        
+        filters - An integer indicating the number of filters in the convolutional layer. Default is 64.
+        
+        kernel - An integer indicating the kernel size of the convolutional layer. Default is 3.
+        
+        conv_activation - A string indicating the type of activation function for the convolutional layer. Default is
+                          'relu'.
+                          
+        lstm_units - An integer indicating the number of units to use in the LSTM. Default is 64.
+        
+        dense_activation - A string indicating the type of activation function to use for the dense layer. Default is
+                           'sigmoid'.
+                           
+        metrics - A list indicating the metrics to use when evaluating classifier performance. Default is to use
+                  accuracy, precision, recall, and F Score.
+                  
+        early_stopping - A boolean indicating whether or not to stop early if the classifier performs worse on a given
+                         epoch. Default is `True`, so the training will stop if performance degrades.
+                         
+        batch_size - An integer indicating the batch size to use in training. Default is 512.
+        
+        epochs - An integer indicating the number of epochs to use in training. Default is 10. Fewer epochs may be used
+                 in practice if early_stopping is `True`.
+                 
+        shuffle - A boolean indicating whether or not to shuffle the data. Default is `True`.
+        
+        class_weight - A dictionary of weights for different classes. This can boost performance in cases where one 
+                       class is much bigger than the other.
+
+    Returns:
+        This function returns a classifier trained on the provided data.
+"""
+
+
+def build_clstm(data, labels, max_words, max_length, is_cluster=False, embedding_size=100, dropout=0.3, filters=64,
+                kernel=3, conv_activation='relu', lstm_units=64, dense_activation='sigmoid', metrics=None,
+                early_stopping=True, batch_size=512, epochs=10, shuffle=True, class_weight=None):
+
+    # Set configuration for cluster computer if indicated.
+    if is_cluster:
+        config_cluster()
+
+    # Build the CLSTM model with Keras.
+    model_clstm = Sequential()
+    model_clstm.add(Embedding(max_words + 1, embedding_size, input_length=max_length))
+    model_clstm.add(Dropout(dropout))
+    model_clstm.add(Conv1D(filters=filters, kernel_size=kernel, activation=conv_activation))
+    model_clstm.add(LSTM(units=lstm_units))
+    model_clstm.add(Dense(1, activation=dense_activation))
+
+    # Fill in default metrics if none provided.
+    if metrics is None:
+        metrics = ['accuracy', get_precision, get_recall, get_f_score]
+
+    # Compile the model.
+    model_clstm.compile(loss='binary_crossentropy', optimizer='Adam', metrics=metrics)
+
+    # Set early stopping if instructed.
+    if early_stopping:
+        callbacks = [EarlyStopping(monitor='loss')]
+    else:
+        callbacks = None
+
+    # Fit and return the CLSTM.
+    return model_clstm.fit(data, y=np.array(labels), callbacks=callbacks, batch_size=batch_size, epochs=epochs,
+                           shuffle=shuffle, class_weight=class_weight)
+
+
+"""
+This function finally evaluates the CLSTM on the test data.
+Parameters: 
+    model - The CLSTM model to be evaluated on.
+    
+    data - The data to be tested on.
+    
+    labels - The true labels for the testing data.
+    
+    print_latex - A boolean indicating whether or not to print the results formatted for a LaTeX table. Default is 
+                  `False` which does not print results in this format.
+                  
+Returns:
+    Nothing. Prints results.
+"""
+
+
+def test_clstm(model, data, labels, print_latex=False):
+
+    # Evaluate the data and print the results.
+    results = model.evaluate(data, np.array(labels))
+    print(results)
+
+    # Print formatted for LaTeX table.
+    if print_latex:
+        print(" %.4f & %.4f & %.4f & %.4f \\\\" % (results[1], results[2], results[3], results[4]))
+
 

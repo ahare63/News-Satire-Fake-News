@@ -1,7 +1,7 @@
 """
 classifierLib.py
 Author: Adam Hare <adamth@alumni.princeton.edu>
-Last Updated: 2 September 2018
+Last Updated: 4 September 2018
 
 Description:
 This file contains a number of functions used to train and evaluate data using the machine learning classifiers.
@@ -10,13 +10,14 @@ run on either Princeton's Nobel or Adroit computing cluster and so some configur
 on where the programs are being run.
 """
 
+import keras.backend as k
 import numpy as np
 import pandas as pd
-
 from scipy.sparse import hstack
 from sklearn import preprocessing
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
+import tensorflow as tf
 
 
 # Given a `pandas` `DataFrame`, this function splits it into two parts based on the provided percentage and returns
@@ -110,3 +111,34 @@ def scale_features(data, feature_list, additional_features):
     # returns an empty list.
     return additional_features
 
+
+# Calculate precision -> taken from old `keras` source code
+def get_precision(y_true, y_predicted):
+    true_positives = k.sum(k.round(k.clip(y_true * y_predicted, 0, 1)))
+    predicted_positives = k.sum(k.round(k.clip(y_predicted, 0, 1)))
+    precision = true_positives / (predicted_positives + k.epsilon())
+    return precision
+
+
+# Calculate recall -> taken from old `keras` source code
+def get_recall(y_true, y_predicted):
+    true_positives = k.sum(k.round(k.clip(y_true * y_predicted, 0, 1)))
+    possible_positives = k.sum(k.round(k.clip(y_true, 0, 1)))
+    recall = true_positives / (possible_positives + k.epsilon())
+    return recall
+
+
+# Get F Score.
+def get_f_score(y_true, y_predicted):
+    pre = get_precision(y_true, y_predicted)
+    rec = get_recall(y_true, y_predicted)
+    return (2*pre*rec)/(pre + rec)
+
+
+# Set some parameters for use in cluster computing.
+def config_cluster():
+
+    # Fixes out of memory errors on Nobel.
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    k.set_session(tf.Session(config=config))

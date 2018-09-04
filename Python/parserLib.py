@@ -1,7 +1,7 @@
 """
 parserLib.py
 Author: Adam Hare <adamth@alumni.princeton.edu>
-Last Updated: 24 August 2018
+Last Updated: 4 September 2018
 
 Description:
 This file contains a number of functions used to parse data from the csv files. Some of these functions may be very
@@ -45,14 +45,14 @@ def get_encoded_date(data, date_range):
 # returns the average syllable count for the body of text.
 def get_avg_syl_count(row, is_title):
     if is_title:
-        syls = textstat.syllable_count(row.Title)
-        return syls/row.titleWordCount
-    syls = textstat.syllable_count(row.Body)
-    return syls/row.wordCount
+        syl = textstat.syllable_count(row.Title)
+        return syl/row.titleWordCount
+    syl = textstat.syllable_count(row.Body)
+    return syl/row.wordCount
 
 
 # Count the number of links and Twitter pictures in the provided text.
 def get_link_count(text):
     num = len(re.findall('http(s)?://', text))
-    num += len(re.findall('pic\.twitter\.com/[A-Za-z0-9]* — .* \(@[A-Za-z0-0]*\)', text))
+    num += len(re.findall('pic\.twitter\.com/[A-Za-z0-9]* — .* \(@[A-Za-z0-9]*\)', text))
     return num
