@@ -23,3 +23,6 @@
 # Compiled python files
 *.pyc
 __pycache__/
+
+# Ignore all files in .idea
+.idea/**
