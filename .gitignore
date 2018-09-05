@@ -19,3 +19,7 @@
 .idea/**/dynamic.xml
 .idea/**/uiDesigner.xml
 .idea/**/dbnavigator.xml
+
+# Compiled python files
+*.pyc
+Python/__pycache__

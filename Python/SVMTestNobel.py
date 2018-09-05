@@ -16,82 +16,12 @@ from sklearn import preprocessing
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-# print some important measures (accuracy, precision, recall, F measure)
-# here, x is a list of the predicted values returned from the SVM, y is a list of the "ground truth" values
-# scoreList is a structure for storing results to be used later, iteration indicates which iteration of the algorithm is being analyzed
-# verbose is a boolean which prints nicely formatted data if true or just the iteration and LaTeX formatted data if false
-
-
-def printMeasures(x, y, scoreList, iteration, verbose=False):
-    # initialize variables
-    TP = 0.0
-    FP = 0.0
-    TN = 0.0
-    FN = 0.0
-    N = len(x)
-    
-    # create a count of each type of classification
-    for i in range(0, N):
-        if x[i]:
-            if y[i]:
-                TP += 1
-            else:
-                FP += 1
-        else:
-            if y[i]:
-                FN += 1
-            else:
-                TN += 1
-
-    assert(N == TP+FP+TN+FN)  # Check that every article was evaluated
-
-    # store each result as a percentage
-    scoreList[0][iteration] = TP/N
-    scoreList[1][iteration] = FP/N
-    scoreList[2][iteration] = FN/N
-    scoreList[3][iteration] = TN/N
-
-    # print the iteration number, optionally print the percentage of each classification type
-    if verbose:
-        print("Iteration = %d" % iteration)
-        print("TP = %.4f" % (TP/N))
-        print("FP = %.4f" % (FP/N))
-        print("FN = %.4f" % (FN/N))
-        print("TN = %.4f" % (TN/N))
-
-    # calculate desired measures
-    acc = (TP+TN)/N
-    pre = TP/(TP + FP)
-    rec = TP/(TP + FN)
-    fm = (2*pre*rec)/(pre + rec)
-
-    # store measures
-    scoreList[4][iteration] = acc
-    scoreList[5][iteration] = pre
-    scoreList[6][iteration] = rec
-    scoreList[7][iteration] = fm
-
-    if verbose:
-        print("Accuracy = %.4f" % acc)
-        print("Precision = %.4f" % pre)
-        print("Recall = %.4f" % rec)
-        print("F = %.4f" % fm)
-        
-    print("%d & %.4f & %.4f & %.4f & %.4f & %.4f & %.4f & %.4f & %.4f\\\\" % (iteration, TP/N, FP/N, FN/N, TN/N, acc,
-                                                                              pre, rec, fm))
-    print()
-
 
 # train and test on entire corpus, serious vs satire
 def testAllBin(numIts, featureList):
     # lists to hold: true positive, false positive, true negative, false negative, accuracy, precision, recall, F measure
     scoreList = [[None] * numIts for _ in range(8)]
 
-    allSatire = pd.read_csv('./Data/allSatire.csv')
-    allSatire = allSatire.drop(['Unnamed: 0'], axis=1)
-
-    allSerious = pd.read_csv('./Data/allSerious.csv')
-    allSerious = allSerious.drop(['Unnamed: 0'], axis=1)
 
     for i in range(0, numIts):
         N = len(allSatire.Body)
