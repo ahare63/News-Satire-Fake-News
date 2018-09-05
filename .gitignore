@@ -22,4 +22,4 @@
 
 # Compiled python files
 *.pyc
-Python/__pycache__
+__pycache__/
