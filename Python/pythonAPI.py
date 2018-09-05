@@ -1,5 +1,5 @@
 """
-python-api.py
+pythonAPI.py
 Author: Adam Hare <adamth@alumni.princeton.edu>
 Last Updated: 4 September 2018
 
@@ -16,35 +16,47 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer
 from nltk.tokenize import word_tokenize, sent_tokenize
 import numpy as np
-import pandas as pd
 import re
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from textstat.textstat import textstat
 
 from classifierLib import config_cluster, get_bag_of_words, get_f_score, get_precision, get_recall, merge_data, \
-    scale_features
+    scale_features, get_measures
 from parserLib import get_avg_syl_count, get_encoded_date, get_link_count, get_profanity_count
 
 
 """
-This function does all necessary parsing on a given csv file based on given parameters. It assumes the csv is 
-formatted as in one of the provided csv files, although not all fields are needed to start. Specifically, the `Body`,
-`Date`, and `Title` columns are required although they can be empty. All parsing is off by default.
+This function takes a list of files as input. It reads those files into `pandas` `DataFrame` objects and combines them.
+
+Parameters:
+    files - A list of paths to the files to be read.
+
+    percentage - The percentage of each file to be read. By default 1, which reads all available data. Should range
+                 between 0 and 1. Set this to a lower number for debugging classifiers.
+
+    shuffle - A boolean value indicating whether or not to shuffle the data. Default is `True`, which shuffles all data.
+"""
+
+
+def from_files(files, frac=1, shuffle=True):
+    return merge_data(files, frac, shuffle)
+
+
+"""
+This function does all necessary parsing on a given `pandas` `DataFrame` based on given parameters. It assumes the 
+`DataFrame` is formatted as in one of the provided csv files, although not all fields are needed to start. Specifically,
+the `Body`, `Date`, and `Title` columns are required although they can be empty. All parsing is off by default.
 
     Parameters:
         # Note: all boolean parameters are `False` by default. This indicates that no calculation will be made. If this
-        # function is passed only the filename parameter, it will build and return a `pandas` `DataFrame` read from the
-        # csv specified by filename. Additionally, running each of these will overwrite whatever is in the column they
-        # write to but not change any other columns.
+        # function is passed only the filename parameter, it will do nothing. Additionally, running each of these will 
+        # overwrite whatever is in the column they write to but not change any other columns.
     
-        filename - The name of the csv file from which to read the initial data.
-        
-        write_to_file - Whether or not to write to the input file. If `False`, no data is written. If `True`, data is 
-                        written to the file specified by the filename parameter. `False` by default.
+        data - A `pandas` `DataFrame` with the relevant data.
                         
-        target_file - If specified, a target file to write to. Otherwise, no file is written. Both write_to_file and
-                      target_file can write in a given call.
+        target_file - If specified, a target file to write to. Otherwise, no file is written. Default is `None`,
+                      indicating no data will be written.
                       
         run_all - A boolean value indicating whether or not to build all features. Overrides all subsequent parameters
                   except profane_dict_file and date_range. By default `False`, meaning that all other parameters are
@@ -57,7 +69,7 @@ formatted as in one of the provided csv files, although not all fields are neede
                             contain only regular expressions of what will be identified as profane words. See included 
                             file `profaneWords.csv` for an example.
                             
-        is_satire - If specified, indicates whether or not an article is satire. Default is `None`, which skips adding a
+        label - If specified, indicates whether or not an article is satire. Default is `None`, which skips adding a
                     label. If 0, every article in the file is given a label of 0 for non-satirical. If 1, every article
                     is given a label of 1 for satirical. Throws an error if given something other than 0 or 1.
                     Writes to 'isSatire' column.
@@ -111,32 +123,28 @@ formatted as in one of the provided csv files, although not all fields are neede
 """
 
 
-def parse_data(filename, write_to_file=False, target_file=None, run_all=False, count_profane=False,
-               profane_dict_file='profaneWords.csv', is_satire=None, encode_date=False, date_range=range(2010, 2018),
-               title_word_count=False, word_count=False, title_syl_count=False, body_syl_count=False,
-               sentence_count=False, link_count=False, twitter_count=False, title_fr_score=False, fr_score=False,
-               title_gf_score=False, gf_score=False, title_ari_score=False, ari_score=False):
+def parse_data(data, target_file=None, run_all=False, count_profane=False, profane_dict_file='profaneWords.csv',
+               label=None, encode_date=False, date_range=range(2010, 2018), title_word_count=False,
+               word_count=False, title_syl_count=False, body_syl_count=False, sentence_count=False, link_count=False,
+               twitter_count=False, title_fr_score=False, fr_score=False, title_gf_score=False, gf_score=False,
+               title_ari_score=False, ari_score=False):
 
     # Check to see if the run_all flag has been set to True.
     if run_all:
         print("Warning: all features to be run. This may overwrite values in existing columns.")
-        return parse_data(filename, write_to_file=write_to_file, target_file=target_file, count_profane=True,
-                          profane_dict_file=profane_dict_file, is_satire=is_satire, encode_date=True,
-                          date_range=date_range, title_word_count=True, word_count=True, title_syl_count=True,
-                          body_syl_count=True, sentence_count=True, link_count=True, twitter_count=True,
-                          title_fr_score=True, fr_score=True, title_gf_score=True, gf_score=True, title_ari_score=True,
-                          ari_score=True)
-
-    # Read the data from the csv file.
-    data = pd.read_csv(filename, index_col=0)
+        return parse_data(data, target_file=target_file, count_profane=True, profane_dict_file=profane_dict_file,
+                          label=label, encode_date=True, date_range=date_range, title_word_count=True,
+                          word_count=True, title_syl_count=True, body_syl_count=True, sentence_count=True,
+                          link_count=True, twitter_count=True, title_fr_score=True, fr_score=True, title_gf_score=True,
+                          gf_score=True, title_ari_score=True, ari_score=True)
 
     # Count the number of profane words.
     if count_profane:
         data['profanityCount'] = get_profanity_count(data, profane_dict_file)
 
     # Add satirical label.
-    if is_satire is not None:
-        data['isSatire'] = np.repeat(is_satire, len(data.Body))
+    if label is not None:
+        data['isSatire'] = np.repeat(label, len(data.Body))
 
     # Do one-hot encoding on the date.
     if encode_date:
@@ -190,33 +198,12 @@ def parse_data(filename, write_to_file=False, target_file=None, run_all=False, c
     if ari_score:
         data['ARI'] = data['Body'].apply(lambda x: textstat.automated_readability_index(x))
 
-    # Write to file filename.
-    if write_to_file:
-        data.to_csv(filename)
-
-    # Write to other file if specified by target_file.
+    # Write to file if specified by target_file.
     if target_file is not None:
         data.to_csv(target_file)
 
     # Return `DataFrame` object
     return data
-
-
-"""
-This function takes a list of files as input. It reads those files into `pandas` `DataFrame` objects and combines them.
-
-Parameters:
-    files - A list of paths to the files to be read.
-    
-    percentage - The percentage of each file to be read. By default 1, which reads all available data. Should range
-                 between 0 and 1. Set this to a lower number for debugging classifiers.
-                 
-    shuffle - A boolean value indicating whether or not to shuffle the data. Default is `True`, which shuffles all data.
-"""
-
-
-def from_files(files, percentage=1, shuffle=True):
-    merge_data(files, percentage, shuffle)
 
 
 """
@@ -259,8 +246,8 @@ words.
 
 
     Returns:
-        This function returns a `pandas` `DataFrame` containing the processed data and a `numpy` `ndarray` of labels 
-        for that data.
+        This function returns a `pandas` `DataFrame` containing the processed data, a `numpy` `ndarray` of labels 
+        for that data, and the bag of words vectorizer.
 """
 
 
@@ -313,9 +300,8 @@ containing the processed data, a `numpy` `ndarray` of labels for that data, the 
 
     Returns:
     It returns a `pandas` `DataFrame` containing the processed data, a `numpy` `ndarray` of labels for that data, the 
-    tokenizer, and the max_length parameter. max_length is returned because if it is not set manually it becomes the
-    longest article length in the training data. This number must be the same for both training and testing, so this
-    allows recovery for use on the testing data.
+    tokenizer, the max_words, and the max_length parameter. `max_words` and `max_length` are returned in case they are
+    computed relative to the data because they are needed when preprocessing the testing data.
 """
 
 
@@ -344,35 +330,21 @@ def preprocess_clstm(data, tokenizer=None, label_column="isSatire", append_title
     if max_length is None:
         max_length = len(max(as_sequence, key=len))
 
+    # If not provided, calculate the maximum number of words.
+    if max_words is None:
+        max_words = len(tokenizer.word_index)
+
     # Pad for use with CLSTM and return.
-    return np.array(pad_sequences(as_sequence, maxlen=max_length)), labels, tokenizer, max_length
+    return np.array(pad_sequences(as_sequence, maxlen=max_length)), labels, tokenizer, max_words, max_length
 
 
 """
 This function learns hyper-parameters for the SVM for a specific data set and a specific range of parameters.
 This function makes heavy use of standard `sk-learn` functions.
     Parameters:
-        data - A `pandas` `DataFrame` object containing the data to be preprocessed.
+        data - A `pandas` `DataFrame` object containing the preprocessed data.
 
-        label_column - A string indicating the name of the of the column to be used as the labels for the data. By 
-                       default, this is "isSatire".
-
-        bag_of_words_column - A string indicating the name of the column to be used as the source for the bag of words
-                              data. By default, this is "Body".
-
-        is_tf - A boolean value indicating whether or not to use the TF-IDF weighting. Default is `False`, which means
-                that a simple word count will be used instead.
-
-        use_stop_words - A boolean value indicating whether or not to use English "stop words." Default is `True`, 
-                         which means that common English stop words will be removed from analysis.
-
-        is_binary - A boolean value indicating whether or not to use a binary weighting. Default is `True`, which means
-                    that all words will be given a value of 0 if they do not appear in a given text and 1 if they appear
-                    at least once.
-
-        feature_columns - A list of strings indicating column names to be used as features. They will all be normalized.
-                          By default, this is all values used in testing. Pass an empty list to include no additional
-                          features.
+        labels - The labels for data.
 
         params - Hyperparameters to be tested. By default, these are `class_weight` as "balanced" and `None` and `C`
                  from 10^-5 to 10^3. Please refer to the `sk-learn` documentation for more information.
@@ -381,20 +353,13 @@ This function makes heavy use of standard `sk-learn` functions.
                   The default is 'accuracy'.
 
         verbose - A boolean value indicating whether or not to print all of the data returned from the results. Default
-                  is `False`, which only prints the best estimator.
+                  is `False`, which doesn't print anything.
     Returns:
-        A dictionary of the hyperparameters found to fit best with this data. Also prints these results.
+        A dictionary of the hyperparameters found to fit best with this data.
 """
 
 
-def train_svm_hyperparameters(data, label_column="isSatire", bag_of_words_column="Body", is_tf=False,
-                              use_stop_words=True, is_binary=True, feature_columns=None, params=None,
-                              scoring='accuracy', verbose=False):
-
-    # Do preprocessing on the data.
-    features, labels, _ = preprocess_svm(data, label_column=label_column, bag_of_words_column=bag_of_words_column,
-                                         is_tf=is_tf, use_stop_words=use_stop_words, is_binary=is_binary,
-                                         feature_columns=feature_columns)
+def train_svm_hyperparameters(data, labels, params=None, scoring='accuracy', verbose=False):
 
     # Set the parameters to be tried.
     if params is None:
@@ -404,15 +369,15 @@ def train_svm_hyperparameters(data, label_column="isSatire", bag_of_words_column
     # Use the sk-learn library to find the best hyperparameters.
     svc = LinearSVC()
     classifier = GridSearchCV(svc, params, scoring=scoring)
-    classifier.fit(features, labels)
+    classifier.fit(data, labels)
 
     # Print the results.
     if verbose:
         print(classifier.cv_results_)
         print("Best parameters: ", classifier.best_params_)
         print("Best score: ", classifier.best_score_)
+        print("Best estimator: ", classifier.best_estimator_)
 
-    print("Best estimator: ", classifier.best_estimator_)
     return classifier.best_params_
 
 
@@ -436,7 +401,7 @@ This function uses the provided data to build an SVM classifier.
 def build_svm(data, labels, params):
 
     # Build using the specified parameters.
-    svc = LinearSVC(params)
+    svc = LinearSVC(**params)
 
     # Fit on the provided data and return.
     return svc.fit(data, labels)
@@ -527,8 +492,9 @@ def build_clstm(data, labels, max_words, max_length, is_cluster=False, embedding
         callbacks = None
 
     # Fit and return the CLSTM.
-    return model_clstm.fit(data, y=np.array(labels), callbacks=callbacks, batch_size=batch_size, epochs=epochs,
-                           shuffle=shuffle, class_weight=class_weight)
+    model_clstm.fit(data, y=np.array(labels), callbacks=callbacks, batch_size=batch_size, epochs=epochs,
+                    shuffle=shuffle, class_weight=class_weight)
+    return model_clstm
 
 
 """
@@ -540,22 +506,57 @@ Parameters:
     
     labels - The true labels for the testing data.
     
+    verbose - A boolean indicating whether or not to print the results. By default `False` and no results are printed.
+    
     print_latex - A boolean indicating whether or not to print the results formatted for a LaTeX table. Default is 
                   `False` which does not print results in this format.
                   
 Returns:
-    Nothing. Prints results.
+    Returns the results.
 """
 
 
-def test_clstm(model, data, labels, print_latex=False):
+def test_clstm(model, data, labels, verbose=False, print_latex=False):
 
     # Evaluate the data and print the results.
     results = model.evaluate(data, np.array(labels))
-    print(results)
+    if verbose:
+        print(results)
 
     # Print formatted for LaTeX table.
     if print_latex:
         print(" %.4f & %.4f & %.4f & %.4f \\\\" % (results[1], results[2], results[3], results[4]))
 
+    return results
 
+
+"""
+This function finally evaluates the SVM model on the test data.
+Parameters:
+    model - The SVM model to be evaluated on.
+    
+    data - The data to be tested on.
+    
+    labels - The true labels for the testing data.
+    
+    iteration - An integer corresponding to the iteration number this is. By default, `None`.
+    
+    verbose - A boolean indicating whether or not all data should be printed. By default, `False` and no data is 
+              printed.
+              
+    print_latex - A boolean indicating whether or not to print all data as a row in a `LaTeX` table. Default is `False`
+                  and no data is printed.
+                  
+Returns:
+    Returns accuracy, precision, recall, and F Score for the tested data.
+    
+"""
+
+
+def test_svm(model, data, labels, verbose=False, print_latex=False):
+
+    # Predict labels.
+    predicted_labels = model.predict(data)
+
+    # Get performance measures.
+    return get_measures(labels, predicted_labels, iteration=None, verbose=verbose, print_latex=print_latex)

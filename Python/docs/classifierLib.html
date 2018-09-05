@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module classifierLib</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>classifierLib</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/Users/adamhare/Senior_Thesis/Python/classifierLib.py">/Users/adamhare/Senior_Thesis/Python/classifierLib.py</a></font></td></tr></table>
+    <p><tt>classifierLib.py<br>
+Author:&nbsp;Adam&nbsp;Hare&nbsp;&lt;adamth@alumni.princeton.edu&gt;<br>
+Last&nbsp;Updated:&nbsp;4&nbsp;September&nbsp;2018<br>
+&nbsp;<br>
+Description:<br>
+This&nbsp;file&nbsp;contains&nbsp;a&nbsp;number&nbsp;of&nbsp;functions&nbsp;used&nbsp;to&nbsp;train&nbsp;and&nbsp;evaluate&nbsp;data&nbsp;using&nbsp;the&nbsp;machine&nbsp;learning&nbsp;classifiers.<br>
+Some&nbsp;of&nbsp;these&nbsp;functions&nbsp;may&nbsp;be&nbsp;very&nbsp;time-intensive&nbsp;depending&nbsp;on&nbsp;the&nbsp;size&nbsp;of&nbsp;the&nbsp;data&nbsp;set.&nbsp;They&nbsp;are&nbsp;also&nbsp;configured&nbsp;to<br>
+run&nbsp;on&nbsp;either&nbsp;Princeton's&nbsp;Nobel&nbsp;or&nbsp;Adroit&nbsp;computing&nbsp;cluster&nbsp;and&nbsp;so&nbsp;some&nbsp;configuration&nbsp;changes&nbsp;may&nbsp;be&nbsp;required&nbsp;depending<br>
+on&nbsp;where&nbsp;the&nbsp;programs&nbsp;are&nbsp;being&nbsp;run.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="keras.backend.html">keras.backend</a><br>
+<a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top><a href="pandas.html">pandas</a><br>
+<a href="sklearn.preprocessing.html">sklearn.preprocessing</a><br>
+</td><td width="25%" valign=top><a href="tensorflow.html">tensorflow</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-config_cluster"><strong>config_cluster</strong></a>()</dt></dl>
+ <dl><dt><a name="-get_bag_of_words"><strong>get_bag_of_words</strong></a>(data, vectorizer, is_tf, use_stop_words, is_binary)</dt></dl>
+ <dl><dt><a name="-get_f_score"><strong>get_f_score</strong></a>(y_true, y_predicted)</dt></dl>
+ <dl><dt><a name="-get_measures"><strong>get_measures</strong></a>(true_labels, predicted_labels, iteration, verbose, print_latex)</dt></dl>
+ <dl><dt><a name="-get_precision"><strong>get_precision</strong></a>(y_true, y_predicted)</dt></dl>
+ <dl><dt><a name="-get_recall"><strong>get_recall</strong></a>(y_true, y_predicted)</dt></dl>
+ <dl><dt><a name="-merge_data"><strong>merge_data</strong></a>(file_names, percentage, shuffle)</dt></dl>
+ <dl><dt><a name="-scale_features"><strong>scale_features</strong></a>(data, feature_list, additional_features)</dt></dl>
+ <dl><dt><a name="-split_data"><strong>split_data</strong></a>(data, frac, shuffle)</dt></dl>
+</td></tr></table>
+</body></html>

@@ -13,7 +13,18 @@ import re
 import csv
 
 
-# Count number of profane words in a given text.
+"""
+Count number of profane words in a given text.
+Parameters:
+    text - The text to be considered.
+    
+    profane_list - The list of words considered to be profane.
+    
+Returns:
+    A number indicating the number of profane words found in the text.
+"""
+
+
 def profanity_count(text, profane_list):
     num = 0
     for word in profane_list:
@@ -21,7 +32,18 @@ def profanity_count(text, profane_list):
     return num
 
 
-# Open the csv that contains the profane word dictionary and count the number of appearances for each article.
+"""
+Open the csv that contains the profane word dictionary and count the number of appearances for each article.
+Parameters:
+    data - The data to run the profanity count on.
+    
+    dict_file - A path to a csv that contains a list of profane words.
+    
+Returns:
+    A column that has a count of the number of profane words found in the "Body" column.
+"""
+
+
 def get_profanity_count(data, dict_file):
     with open(dict_file, 'r') as file:
         profane_list = []
@@ -30,19 +52,41 @@ def get_profanity_count(data, dict_file):
         return data['Body'].apply(lambda x: profanity_count(x, profane_list))
 
 
-# Do one-hot encoding on the date. Assigns a one to the column corresponding to the year provided and a one to all
-# others. If the date is NaN or out of range, it leaves all columns as zero. Optionally takes a range of supported
-# years, by default 2010-2017 inclusive.
+"""
+Do one-hot encoding on the date. Assigns a one to the column corresponding to the year provided and a one to all
+others. If the date is NaN or out of range, it leaves all columns as zero. Optionally takes a range of supported
+years, by default 2010-2017 inclusive.
+Parameters:
+    data - The data to encode the date on.
+    
+    date_range - The range of dates to encode. Includes the lower bound but not the upper bound.
+    
+Returns:
+    The one-hot encoded data.
+"""
+
+
 def get_encoded_date(data, date_range):
     for date in date_range:
         data[str(date)] = data["Date"].apply(lambda x: int(x == date))
     return data
 
 
-# Function to get the average number of syllables per word.
-# Here, row refers to the article being considered. is_title is a boolean, which when `True`
-# calculates the average syllable count for the title. When isTitle is False, this function
-# returns the average syllable count for the body of text.
+"""
+Function to get the average number of syllables per word.
+Here, row refers to the article being considered. is_title is a boolean, which when `True`
+calculates the average syllable count for the title. When isTitle is False, this function
+returns the average syllable count for the body of text.
+Parameters:
+    row - The row of data to be considered.
+    
+    is_title - A boolean value indicating whether or not this average syllable count is for the title.
+    
+Returns:
+    An average syllable count for that row.
+"""
+
+
 def get_avg_syl_count(row, is_title):
     if is_title:
         syl = textstat.syllable_count(row.Title)
@@ -51,7 +95,16 @@ def get_avg_syl_count(row, is_title):
     return syl/row.wordCount
 
 
-# Count the number of links and Twitter pictures in the provided text.
+"""
+Count the number of links and Twitter pictures in the provided text.
+Parameters: 
+    text - The text to be analyzed.
+    
+Returns
+    An integer indicating the number of links found.
+"""
+
+
 def get_link_count(text):
     num = len(re.findall('http(s)?://', text))
     num += len(re.findall('pic\.twitter\.com/[A-Za-z0-9]* — .* \(@[A-Za-z0-9]*\)', text))

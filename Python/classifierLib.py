@@ -19,17 +19,32 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 import tensorflow as tf
 
+"""
+Given a `pandas` `DataFrame`, this function splits it into two parts based on the provided fraction and returns
+both. Valid values for `frac` range from 0 to 1 inclusive. If shuffle is `True`, all data is shuffled, otherwise it 
+is returned in the order it was read.
+Parameters: 
+    data - The data to be split, in the form of a `pandas` `DataFrame`.
+    
+    frac - The fraction of data to be put in the first result. The rest will be returned in the second result.
+           This number should range from 0 to 1 inclusive, where 0 puts all data in the second result and 1 puts all 
+           data in the first result.
+                 
+    shuffle - A boolean value indicating whether or not to shuffle the data. When set to `True`, the data is shuffled.
+    
+Returns:
+    Two `pandas` `DataFrame` objects, the first with `frac` * 100 percent of the data and the other with 
+    (1-`frac`) * 100 percent of the data.
+"""
 
-# Given a `pandas` `DataFrame`, this function splits it into two parts based on the provided percentage and returns
-# both as a tuple. Valid values for percentage range from 0 to 1 inclusive. If shuffle is `True`, all data is shuffled,
-# otherwise it is returned in the order it was read.
-def split_data(data, percentage, shuffle):
-    # Ensure the percentage is a valid decimal.
-    if percentage < 0 or percentage > 1:
+
+def split_data(data, frac, shuffle):
+    # Ensure frac is a valid decimal.
+    if frac < 0 or frac > 1:
         raise ValueError('Percentage must be between zero and one.')
     else:
         n = len(data)
-        n_first = int(n*percentage)
+        n_first = int(n*frac)
         if shuffle:
             shuffler = np.random.permutation(n)
             return data.loc[shuffler[:n_first]], data.loc[shuffler[n_first:]]
@@ -37,11 +52,26 @@ def split_data(data, percentage, shuffle):
             return data.loc[:n_first], data.loc[n_first:]
 
 
-# This function takes a list of file paths to csv files, reads each into a `pandas` `DataFrame` object, and returns a
-# `DataFrame` consisting of the data from all of these files combined. This is useful for combining data from different
-# files. Before combining files, it reduces them to a percentage specified by the percentage parameter. This ensures
-# that each file is proportionally represented if not all data is needed by the function calling merge_data. If shuffle
-# is set to `False`, all data will be maintained in order.
+"""
+This function takes a list of file paths to csv files, reads each into a `pandas` `DataFrame` object, and returns a
+`DataFrame` consisting of the data from all of these files combined. This is useful for combining data from different
+files. Before combining files, it reduces them to a percentage specified by the percentage parameter. This ensures
+that each file is proportionally represented if not all data is needed by the function calling merge_data. If shuffle
+is set to `False`, all data will be maintained in order.
+Parameters:
+    file_names - The paths to the files to be merged as a list.
+    
+    frac - The fraction of each data in each file to be retained. This can vary from 0 to 1 inclusive, with 0 resulting
+           in no data being read from any of the files and 1 reading all available data.
+           
+    shuffle - A boolean value indicating whether or not the data will be shuffled. If `False`, the data will be returned
+              in the order it appeared in each file, in the order the files were given in the list.
+              
+Returns:
+    One `pandas` `DataFrame` with all of the read data.
+"""
+
+
 def merge_data(file_names, percentage, shuffle):
 
     try:
@@ -63,21 +93,37 @@ def merge_data(file_names, percentage, shuffle):
             data = pd.concat([data, new_data], ignore_index=True)
             if shuffle:
                 data = data.sample(frac=1)
-
         return data
 
     except IndexError:
         print('Must include at least one data file.')
 
 
-# This function creates and returns a weighted bag of words from the data based on the provided parameters. data is
-# expected to be a single column from a `pandas` `DataFrame`, typically "Body" in this use case.
-# is_tf is a boolean which if `True` creates the bag of words using a TF-IDF weighting and if `False` creates the bag of
-# words with a simple count weighting. use_stop_words is a boolean which removes English "stop words" if `True` and
-# nothing if `False`. is_binary is a boolean which sets all non-zero counts to 1 when `True`. If is_tf is
-# `False`, this results in a vector of ones and zeros only. If is_tf is `True`, the TF-IDF weightings will
-# not be either zero or one as this parameter only changes how counts are considered. This function also returns the
-# vectorizer used to create the bag of words.
+"""
+This function creates and returns a weighted bag of words from the data based on the provided parameters. data is
+expected to be a single column from a `pandas` `DataFrame`, typically "Body" in this use case.
+Parameters:
+    data - The data to be read.
+    
+    vectorizer - The model used to make the bag of words. If `None`, a new bag of words is created by the other
+                 parameters. If provided, following parameters are ignored and the vectorizer is used instead.
+                 
+    is_tf - A boolean value indicating whether or not to use the TF-IDF weighting. If `True`, TF-IDF is used and if
+            `False` the appearances of words are simply counted.
+            
+    use_stop_words - A boolean value indicating whether or not to remove common stop words from the data. When `True`,
+                     common English stop words are used and when `False` all words are considered.
+                     
+    is_binary - A boolean value indicating whether or not to use a binary weighting for word appearances. If `True`,
+                any words that appear at least once will get a weight of 1 and all words that don't appear a weight 0.
+                This carries over to TF-IDF, but the TF-IDF still returns a range of values, only considering the word
+                count part of it as binary.
+                
+Returns:
+    The bag of words data and the vectorizer used to create it.
+"""
+
+
 def get_bag_of_words(data, vectorizer, is_tf, use_stop_words, is_binary):
     # Check if we got a vectorizer, in which case use it and return.
     if vectorizer is not None:
@@ -99,9 +145,23 @@ def get_bag_of_words(data, vectorizer, is_tf, use_stop_words, is_binary):
     return vectorizer.fit_transform(data), vectorizer
 
 
-# This function scales and returns the appropriate feature columns. Here, data is the `pandas` `DataFrame` containing
-# all of the data and features is a list of the desired column names to be scaled. additional_features allows the
-# specification of additional feature columns that are not included in the data `DataFrame`.
+"""
+This function scales and returns the appropriate feature columns. 
+Parameters:
+    data - The `pandas` `DataFrame` containing the relevant data.
+    
+    feature_list - A string list of features to be used in analysis, in this case the names of the columns in `data` to
+                   be used.
+                   
+    additional_features - Any additional features not provided in `data` that need to be added. In this case,
+                          'additional_features` is often the bag of words returned by get_bag_of_words.
+                          
+Returns:
+    A `numpy` `ndarray` consisting of the columns of `feature_list` scaled and concatenated with those in 
+    `additional_data`.
+"""
+
+
 def scale_features(data, feature_list, additional_features):
     # Ensure we have some features from the data to scale.
     if feature_list:
@@ -112,7 +172,18 @@ def scale_features(data, feature_list, additional_features):
     return additional_features
 
 
-# Calculate precision -> taken from old `keras` source code
+""""
+Calculate precision. This is drawn from old `keras` source code.
+Parameters: 
+    y_true - The ground truth labels for the data set.
+    
+    y_predicted - The predicted labels for the data set, as returned by the classifier.
+    
+Returns:
+   A float signifying the classifier's precision on the given data set. 
+"""
+
+
 def get_precision(y_true, y_predicted):
     true_positives = k.sum(k.round(k.clip(y_true * y_predicted, 0, 1)))
     predicted_positives = k.sum(k.round(k.clip(y_predicted, 0, 1)))
@@ -120,7 +191,18 @@ def get_precision(y_true, y_predicted):
     return precision
 
 
-# Calculate recall -> taken from old `keras` source code
+""""
+Calculate recall. This is drawn from old `keras` source code.
+Parameters: 
+    y_true - The ground truth labels for the data set.
+
+    y_predicted - The predicted labels for the data set, as returned by the classifier.
+
+Returns:
+   A float signifying the classifier's recall on the given data set. 
+"""
+
+
 def get_recall(y_true, y_predicted):
     true_positives = k.sum(k.round(k.clip(y_true * y_predicted, 0, 1)))
     possible_positives = k.sum(k.round(k.clip(y_true, 0, 1)))
@@ -128,17 +210,132 @@ def get_recall(y_true, y_predicted):
     return recall
 
 
-# Get F Score.
+""""
+Calculate F Score.
+Parameters: 
+    y_true - The ground truth labels for the data set.
+
+    y_predicted - The predicted labels for the data set, as returned by the classifier.
+
+Returns:
+   A float signifying the classifier's F Score on the given data set. 
+"""
+
+
 def get_f_score(y_true, y_predicted):
     pre = get_precision(y_true, y_predicted)
     rec = get_recall(y_true, y_predicted)
     return (2*pre*rec)/(pre + rec)
 
 
-# Set some parameters for use in cluster computing.
+"""
+Change some settings to allow this code to work with cluster computers.
+Parameters:
+    None.
+
+Returns:
+    None.
+"""
+
+
 def config_cluster():
 
     # Fixes out of memory errors on Nobel.
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     k.set_session(tf.Session(config=config))
+
+
+"""
+Calculates some important measures on the results of an SVM classification.
+Parameters:
+    true_labels - A vector of ground truth labels.
+    
+    predicted_labels - A vector of labels predicted by the classifier.
+    
+    iteration - Which iteration these results correspond to, for use with shuffled data. Default is `False`, which
+                does not print any iteration information.
+                
+    verbose - A boolean indicating whether or not to print all results on separate lines. Default is `False`, which does
+              not print any values in this manner.
+              
+    print_latex - A boolean indicating whether or not to print the data formatted for a `LaTeX` table. Default is 
+                  `False`, which doesn't print anything.
+Returns:
+    Four floats, corresponding to the accuracy, precision, recall, and F Score of the classifier for the given data.
+"""
+
+
+def get_measures(true_labels, predicted_labels, iteration, verbose, print_latex):
+
+    # Initialize variables.
+    true_positive = 0
+    false_positive = 0
+    true_negative = 0
+    false_negative = 0
+    n = len(true_labels)
+
+    # create a count of each type of classification
+    for i in range(0, n):
+        if true_labels[i]:
+            if predicted_labels[i]:
+                true_positive += 1
+            else:
+                false_positive += 1
+        else:
+            if predicted_labels[i]:
+                false_negative += 1
+            else:
+                true_negative += 1
+
+    # Check that every article was evaluated properly.
+    assert (n == true_positive + false_positive + true_negative + false_negative)
+
+    # Print the iteration number and result of each classification type
+    if verbose:
+        if iteration is not None:
+            print("Iteration = %d" % iteration)
+        print("TP = %.4f" % (true_positive / n))
+        print("FP = %.4f" % (false_positive / n))
+        print("FN = %.4f" % (false_negative / n))
+        print("TN = %.4f" % (true_negative / n))
+
+    # Calculate desired measures.
+    accuracy = (true_positive + true_negative) / n
+
+    # For sufficiently large and complex data sets, all of these should take some value. For testing, they don't always.
+    try:
+        precision = true_positive / (true_positive + false_positive)
+    except ZeroDivisionError:
+        print("Precision caused divide by zero error.")
+        precision = 1
+
+    # For sufficiently large and complex data sets, all of these should take some value. For testing, they don't always.
+    try:
+        recall = true_positive / (true_positive + false_negative)
+    except ZeroDivisionError:
+        print("Recall caused divide by zero error.")
+        recall = 1
+
+    f_score = (2 * precision * recall) / (precision + recall)
+
+    # Print the measures if verbose.
+    if verbose:
+        print("Accuracy = %.4f" % accuracy)
+        print("Precision = %.4f" % precision)
+        print("Recall = %.4f" % recall)
+        print("F = %.4f" % f_score)
+
+    # Print in `LaTeX` format.
+    if print_latex:
+        # Print with iteration.
+        if iteration is not None:
+            print("%d & %.4f & %.4f & %.4f & %.4f & %.4f & %.4f & %.4f & %.4f\\\\" %
+                  (iteration, true_positive / n, false_positive / n, false_negative / n, true_negative / n, accuracy,
+                   precision, recall, f_score))
+        else:
+            print("%.4f & %.4f & %.4f & %.4f & %.4f & %.4f & %.4f & %.4f\\\\" %
+                  (true_positive / n, false_positive / n, false_negative / n, true_negative / n, accuracy, precision,
+                   recall, f_score))
+        print()
+    return accuracy, precision, recall, f_score

@@ -1,0 +1,52 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module pythonAPI</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>pythonAPI</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/Users/adamhare/Senior_Thesis/Python/pythonAPI.py">/Users/adamhare/Senior_Thesis/Python/pythonAPI.py</a></font></td></tr></table>
+    <p><tt>pythonAPI.py<br>
+Author:&nbsp;Adam&nbsp;Hare&nbsp;&lt;adamth@alumni.princeton.edu&gt;<br>
+Last&nbsp;Updated:&nbsp;4&nbsp;September&nbsp;2018<br>
+&nbsp;<br>
+Description:<br>
+This&nbsp;file&nbsp;contains&nbsp;a&nbsp;few&nbsp;higher&nbsp;level&nbsp;functions&nbsp;to&nbsp;handle&nbsp;data&nbsp;parsing,&nbsp;SVM&nbsp;testing,&nbsp;SVM&nbsp;hyper-parameter&nbsp;testing,&nbsp;and<br>
+CLSTM&nbsp;testing.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top><a href="re.html">re</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-build_clstm"><strong>build_clstm</strong></a>(data, labels, max_words, max_length, is_cluster=False, embedding_size=100, dropout=0.3, filters=64, kernel=3, conv_activation='relu', lstm_units=64, dense_activation='sigmoid', metrics=None, early_stopping=True, batch_size=512, epochs=10, shuffle=True, class_weight=None)</dt></dl>
+ <dl><dt><a name="-build_svm"><strong>build_svm</strong></a>(data, labels, params)</dt></dl>
+ <dl><dt><a name="-from_files"><strong>from_files</strong></a>(files, frac=1, shuffle=True)</dt></dl>
+ <dl><dt><a name="-parse_data"><strong>parse_data</strong></a>(data, target_file=None, run_all=False, count_profane=False, profane_dict_file='profaneWords.csv', label=None, encode_date=False, date_range=range(2010, 2018), title_word_count=False, word_count=False, title_syl_count=False, body_syl_count=False, sentence_count=False, link_count=False, twitter_count=False, title_fr_score=False, fr_score=False, title_gf_score=False, gf_score=False, title_ari_score=False, ari_score=False)</dt></dl>
+ <dl><dt><a name="-preprocess_clstm"><strong>preprocess_clstm</strong></a>(data, tokenizer=None, label_column='isSatire', append_title=True, max_words=None, max_length=None)</dt></dl>
+ <dl><dt><a name="-preprocess_svm"><strong>preprocess_svm</strong></a>(data, vectorizer=None, label_column='isSatire', bag_of_words_column='Body', is_tf=False, use_stop_words=True, is_binary=True, feature_columns=None)</dt></dl>
+ <dl><dt><a name="-test_clstm"><strong>test_clstm</strong></a>(model, data, labels, verbose=False, print_latex=False)</dt></dl>
+ <dl><dt><a name="-test_svm"><strong>test_svm</strong></a>(model, data, labels, verbose=False, print_latex=False)</dt></dl>
+ <dl><dt><a name="-train_svm_hyperparameters"><strong>train_svm_hyperparameters</strong></a>(data, labels, params=None, scoring='accuracy', verbose=False)</dt></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>textstat</strong> = &lt;textstat.textstat.textstatistics object&gt;</td></tr></table>
+</body></html>
