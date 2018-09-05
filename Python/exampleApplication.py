@@ -1,11 +1,9 @@
-"""
-exampleApplication.py
-Author: Adam Hare <adamth@alumni.princeton.edu>
-Last Updated: 4 September 2018
+## File: exampleApplication.py
+# Author: Adam Hare <adamth@alumni.princeton.edu>
+# Last Updated: 4 September 2018
 
-Description:
-This file contains an example application of the functions in pythonAPI.py.
-"""
+## Description:
+# This file contains an example application of the functions in pythonAPI.py.
 
 import pandas as pd
 
@@ -13,19 +11,17 @@ from pythonAPI import from_files, parse_data, preprocess_svm, train_svm_hyperpar
     preprocess_clstm, build_clstm, test_clstm
 
 
-"""
-This function is designed to demonstrate the full functionality of the pythonAPI functions for the SVM. It reads data
-from files, builds features, formats them, builds the classifier, tests, and returns the results of the test.
-Parameters:
-    None.
-    
-Returns:
-    None.
-    
-"""
-
-
 def full_svm_test():
+    """
+    This function is designed to demonstrate the full functionality of the pythonAPI functions for the SVM. It reads
+    data from files, builds features, formats them, builds the classifier, tests, and returns the results of the test.
+    Parameters:
+        None.
+
+    Returns:
+        None.
+
+    """
 
     # Read data from files. This method is to ensure the training set has both labels.
     data_serious = from_files(["../Data/smallTrainSample.csv", "../Data/smallTrainSample.csv"])
@@ -61,19 +57,17 @@ def full_svm_test():
     print("Accuracy: %.4f, Precision: %.4f, Recall: %.4f, F Score: %.4f" % test_svm(classifier, test, test_labels))
 
 
-"""
-This function is designed to demonstrate the full functionality of the pythonAPI functions for the CLSTM. It reads data
-from files, builds features, formats them, builds the classifier, tests, and returns the results of the test.
-Parameters:
-    None.
-    
-Returns:
-    None.
-    
-"""
-
-
 def full_clstm_test():
+    """
+    This function is designed to demonstrate the full functionality of the pythonAPI functions for the CLSTM. It reads
+    data from files, builds features, formats them, builds the classifier, tests, and returns the results of the test.
+    Parameters:
+        None.
+
+    Returns:
+        None.
+
+    """
 
     # Read data from files. This method is to ensure the training set has both labels.
     data_serious = from_files(["../Data/smallTrainSample.csv", "../Data/smallTrainSample.csv"])
@@ -106,16 +100,15 @@ def full_clstm_test():
                                                                             results[4]))
 
 
-"""
-Main function which simply runs each of these tests.
-Parameters:
-    None.
-Returns:
-    None
-"""
-
-
 def main():
+    """
+    Main function which simply runs each of these tests.
+    Parameters:
+        None.
+    Returns:
+        None
+    """
+
     print("SVM Results:")
     full_svm_test()
 
