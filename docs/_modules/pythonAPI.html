@@ -1,0 +1,666 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pythonAPI &#8212; Senior Thesis  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pythonAPI</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">pythonAPI.py</span>
+<span class="sd">Author: Adam Hare &lt;adamth@alumni.princeton.edu&gt;</span>
+<span class="sd">Last Updated: 4 September 2018</span>
+
+<span class="sd">Description:</span>
+<span class="sd">This file contains a few higher level functions to handle data parsing, SVM testing, SVM hyper-parameter testing, and</span>
+<span class="sd">CLSTM testing.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">keras.callbacks</span> <span class="k">import</span> <span class="n">EarlyStopping</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">Dropout</span><span class="p">,</span> <span class="n">Conv1D</span><span class="p">,</span> <span class="n">LSTM</span><span class="p">,</span> <span class="n">Dense</span>
+<span class="kn">from</span> <span class="nn">keras.layers.embeddings</span> <span class="k">import</span> <span class="n">Embedding</span>
+<span class="kn">from</span> <span class="nn">keras.models</span> <span class="k">import</span> <span class="n">Sequential</span>
+<span class="kn">from</span> <span class="nn">keras.preprocessing.sequence</span> <span class="k">import</span> <span class="n">pad_sequences</span>
+<span class="kn">from</span> <span class="nn">keras.preprocessing.text</span> <span class="k">import</span> <span class="n">Tokenizer</span>
+<span class="kn">from</span> <span class="nn">nltk.tokenize</span> <span class="k">import</span> <span class="n">word_tokenize</span><span class="p">,</span> <span class="n">sent_tokenize</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">GridSearchCV</span>
+<span class="kn">from</span> <span class="nn">sklearn.svm</span> <span class="k">import</span> <span class="n">LinearSVC</span>
+<span class="kn">from</span> <span class="nn">textstat.textstat</span> <span class="k">import</span> <span class="n">textstat</span>
+
+<span class="kn">from</span> <span class="nn">classifierLib</span> <span class="k">import</span> <span class="n">config_cluster</span><span class="p">,</span> <span class="n">get_bag_of_words</span><span class="p">,</span> <span class="n">get_f_score</span><span class="p">,</span> <span class="n">get_precision</span><span class="p">,</span> <span class="n">get_recall</span><span class="p">,</span> <span class="n">merge_data</span><span class="p">,</span> \
+    <span class="n">scale_features</span><span class="p">,</span> <span class="n">get_measures</span>
+<span class="kn">from</span> <span class="nn">parserLib</span> <span class="k">import</span> <span class="n">get_avg_syl_count</span><span class="p">,</span> <span class="n">get_encoded_date</span><span class="p">,</span> <span class="n">get_link_count</span><span class="p">,</span> <span class="n">get_profanity_count</span>
+
+
+<div class="viewcode-block" id="from_files"><a class="viewcode-back" href="../index.html#pythonAPI.from_files">[docs]</a><span class="k">def</span> <span class="nf">from_files</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function takes a list of csv files as input. It reads those files into `pandas` `DataFrame` objects and</span>
+<span class="sd">    combines them. This function makes no effort to ensure that the input files are formatted in the same way.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        files: A list of paths to the csv files to be read.</span>
+
+<span class="sd">        frac: How much of each file will be read. By default 1, which reads all available data. Should range between 0</span>
+<span class="sd">        and 1. Set this to a lower number for debugging classifiers.</span>
+
+<span class="sd">        shuffle: A boolean value indicating whether or not to shuffle the data. Default is `True`, which shuffles all</span>
+<span class="sd">        data.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `pandas` `DataFrame` built from the files provided by the argument `files`.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        IndexError: This error will be thrown if `files` is empty. May also return errors from `pandas`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">merge_data</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="parse_data"><a class="viewcode-back" href="../index.html#pythonAPI.parse_data">[docs]</a><span class="k">def</span> <span class="nf">parse_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">target_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_all</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">count_profane</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">profane_dict_file</span><span class="o">=</span><span class="s1">&#39;profaneWords.csv&#39;</span><span class="p">,</span>
+               <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">encode_date</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">date_range</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2018</span><span class="p">),</span> <span class="n">title_word_count</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+               <span class="n">word_count</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">title_syl_count</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">body_syl_count</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sentence_count</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">link_count</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+               <span class="n">twitter_count</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">title_fr_score</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fr_score</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">title_gf_score</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">gf_score</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+               <span class="n">title_ari_score</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ari_score</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function does all necessary parsing on a given `pandas` `DataFrame` based on given parameters. It assumes the</span>
+<span class="sd">    `DataFrame` is formatted as in one of the provided csv files, although not all fields are needed to start.</span>
+<span class="sd">    Specifically, the `Body`, `Date`, and `Title` columns are required although they can be empty. All parsing is off</span>
+<span class="sd">    by default.</span>
+
+<span class="sd">    Note: All boolean parameters are `False` by default. This indicates that no calculation will be made. If this</span>
+<span class="sd">    function is passed only the `data` argument, it will do nothing. Additionally, running each of these will</span>
+<span class="sd">    overwrite whatever is in the column they write to but will not change any other columns.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data: A `pandas` `DataFrame` with the relevant data.</span>
+
+<span class="sd">        target_file: If specified, a target file to write to all results to. Otherwise, no file is written. Default is</span>
+<span class="sd">        `None`, indicating no data will be written.</span>
+
+<span class="sd">        run_all: A boolean value indicating whether or not to build all features. Overrides all following parameters</span>
+<span class="sd">        except `profane_dict_file` and `date_range`. By default `False`, meaning that all other parameters are followed</span>
+<span class="sd">        as specified.</span>
+
+<span class="sd">        count_profane: If `True`, count the number of profane words and place in &#39;profanityCount&#39; column.</span>
+
+<span class="sd">        profane_dict_file: The name of the csv file from which to read the dictionary of profane words. By default,</span>
+<span class="sd">        &#39;profaneWords.csv&#39;. Setting this has no effect if count_profane=False. This csv should contain only regular</span>
+<span class="sd">        expressions of what will be identified as profane words. See included file `profaneWords.csv` for an example.</span>
+
+<span class="sd">        label: If specified, indicates whether or not an article is satire. Default is `None`, which skips adding a</span>
+<span class="sd">        label. If 0, every row in the data is given a label of 0 for non-satirical. If 1, every row is given a</span>
+<span class="sd">        label of 1 for satirical. Throws an error if given something other than 0 or 1. Writes to &#39;isSatire&#39; column.</span>
+
+<span class="sd">        encode_date: A boolean value indicating whether or not to do one-hot encoding on the date field. `True` does</span>
+<span class="sd">        the encoding. Writes to columns with the year as the name.</span>
+
+<span class="sd">        date_range: A range of dates to consider. Only valid if encode_date=True. Default is 2010-2017 inclusive.</span>
+
+<span class="sd">        title_word_count: A boolean indicating whether or not to generate a word count for the title. Writes to</span>
+<span class="sd">        &#39;titleWordCount&#39; column if `True`.</span>
+
+<span class="sd">        word_count: A boolean indicating whether or not to generate a word count for the body. Writes to &#39;wordCount&#39;</span>
+<span class="sd">        column if `True`.</span>
+
+<span class="sd">        title_syl_count: A boolean indicating whether or not to generate a title average syllable count. Writes to</span>
+<span class="sd">        &#39;titleAvgSyl&#39; column if `True`. Only valid if titleWordCount column is populated.</span>
+
+<span class="sd">        body_syl_count: A boolean indicating whether or not to generate a body average syllable count.  Writes to</span>
+<span class="sd">        &#39;avgSyl&#39; column if `True`. Only valid if wordCount column is populated.</span>
+
+<span class="sd">        sentence_count: A boolean indicating whether or not to generate a count of the number of sentences in the body.</span>
+<span class="sd">        Writes to &#39;senCount&#39; column if `True`.</span>
+
+<span class="sd">        link_count: A boolean indicating whether or not to generate a count of the number of links found in the body of</span>
+<span class="sd">        the articles.  Writes to &#39;linkCount&#39; column if `True`.</span>
+
+<span class="sd">        twitter_count: A boolean indicating whether or not to generate a count of the number of Twitter characters found</span>
+<span class="sd">        in the body. Writes to &#39;twitChar&#39; column if `True`.</span>
+
+<span class="sd">        title_fr_score: A boolean indicating whether or not to run Flesch Reading Ease scoring algorithm on the title.</span>
+<span class="sd">        Writes to &#39;titleFR&#39; column if `True`.</span>
+
+<span class="sd">        fr_score: A boolean indicating whether or not to run Flesch Reading Ease scoring algorithm on the body. Writes</span>
+<span class="sd">        to &#39;FR&#39; column if `True`.</span>
+
+<span class="sd">        title_gf_score: A boolean indicating whether or not to run the Gunning Fog scoring algorithm on the title.</span>
+<span class="sd">        Writes to &#39;titleGF&#39; column if `True`.</span>
+
+<span class="sd">        gf_score: A boolean indicating whether or not to run the Gunning Fog scoring algorithm on the body. Writes to</span>
+<span class="sd">        &#39;GF&#39; column if `True`.</span>
+
+<span class="sd">        title_ari_score: A boolean indicating whether or not to run the Automated Readability Index algorithm on the</span>
+<span class="sd">        title. Writes to &#39;titleARI&#39; column if `True`.</span>
+
+<span class="sd">        ari_score: A boolean indicating whether or not to run the Automated Readability Index algorithm on the body.</span>
+<span class="sd">        Writes to &#39;ARI&#39; column if `True`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        This function returns a `pandas` `DataFrame` object with the desired parsed fields added.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: This error will be thrown if `date_range` is specified but `encode_date=False`.</span>
+
+<span class="sd">        IndexError: This error will be thrown if the program tries to parse a field that relies on a field that does not</span>
+<span class="sd">        yet exist.</span>
+
+<span class="sd">        Additional errors may be thrown by dependencies.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Check to see if the run_all flag has been set to True.</span>
+    <span class="k">if</span> <span class="n">run_all</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: all features to be run. This may overwrite values in existing columns.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">parse_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">target_file</span><span class="o">=</span><span class="n">target_file</span><span class="p">,</span> <span class="n">count_profane</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">profane_dict_file</span><span class="o">=</span><span class="n">profane_dict_file</span><span class="p">,</span>
+                          <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">encode_date</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">date_range</span><span class="o">=</span><span class="n">date_range</span><span class="p">,</span> <span class="n">title_word_count</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                          <span class="n">word_count</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">title_syl_count</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">body_syl_count</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sentence_count</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                          <span class="n">link_count</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">twitter_count</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">title_fr_score</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fr_score</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">title_gf_score</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                          <span class="n">gf_score</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">title_ari_score</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ari_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Count the number of profane words.</span>
+    <span class="k">if</span> <span class="n">count_profane</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;profanityCount&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_profanity_count</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">profane_dict_file</span><span class="p">)</span>
+
+    <span class="c1"># Add satirical label.</span>
+    <span class="k">if</span> <span class="n">label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;isSatire&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">Body</span><span class="p">))</span>
+
+    <span class="c1"># Do one-hot encoding on the date.</span>
+    <span class="k">if</span> <span class="n">encode_date</span><span class="p">:</span>
+        <span class="n">get_encoded_date</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">date_range</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">date_range</span> <span class="o">!=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2018</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Date range cannot be set if encode_date=False&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Get word counts.</span>
+    <span class="k">if</span> <span class="n">title_word_count</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;titleWordCount&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Title&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="n">word_count</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;wordCount&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Body&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span>
+
+    <span class="c1"># Do average syllable counts.</span>
+    <span class="k">if</span> <span class="n">title_syl_count</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;titleWordCount&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s1">&#39;Must generate title word count before calculating title average syllable count &#39;</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;titleAvgSyl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">get_avg_syl_count</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">body_syl_count</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;wordCount&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s1">&#39;Must generate word count before calculating average syllable count &#39;</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;avgSyl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">get_avg_syl_count</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Get sentence counts.</span>
+    <span class="k">if</span> <span class="n">sentence_count</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;senCount&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Body&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">sent_tokenize</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span>
+
+    <span class="c1"># Get the number of links in the body.</span>
+    <span class="k">if</span> <span class="n">link_count</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;linkCount&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Body&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">get_link_count</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+    <span class="c1"># Get the number of Twitter characters in the body</span>
+    <span class="k">if</span> <span class="n">twitter_count</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;twitChar&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Body&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;[@#]&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)))</span>
+
+    <span class="c1"># Generate Flesch Reading Ease score.</span>
+    <span class="k">if</span> <span class="n">title_fr_score</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;titleFR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Title&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">textstat</span><span class="o">.</span><span class="n">flesch_reading_ease</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">fr_score</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;FR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Body&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">textstat</span><span class="o">.</span><span class="n">flesch_reading_ease</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+    <span class="c1"># Generate Gunning Fog score.</span>
+    <span class="k">if</span> <span class="n">title_gf_score</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;titleGF&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Title&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">textstat</span><span class="o">.</span><span class="n">gunning_fog</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">gf_score</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;GF&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Body&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">textstat</span><span class="o">.</span><span class="n">gunning_fog</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+    <span class="c1"># Generate Automated Readability Index score.</span>
+    <span class="k">if</span> <span class="n">title_ari_score</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;titleARI&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Title&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">textstat</span><span class="o">.</span><span class="n">automated_readability_index</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">ari_score</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;ARI&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Body&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">textstat</span><span class="o">.</span><span class="n">automated_readability_index</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+    <span class="c1"># Write to file if specified by target_file.</span>
+    <span class="k">if</span> <span class="n">target_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">target_file</span><span class="p">)</span>
+
+    <span class="c1"># Return `DataFrame` object</span>
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="preprocess_svm"><a class="viewcode-back" href="../index.html#pythonAPI.preprocess_svm">[docs]</a><span class="k">def</span> <span class="nf">preprocess_svm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">vectorizer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label_column</span><span class="o">=</span><span class="s2">&quot;isSatire&quot;</span><span class="p">,</span> <span class="n">bag_of_words_column</span><span class="o">=</span><span class="s2">&quot;Body&quot;</span><span class="p">,</span> <span class="n">is_tf</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">use_stop_words</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_binary</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">feature_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function preprocesses the data, preparing it for use by an SVM classifier. It returns a `pandas` `DataFrame`</span>
+<span class="sd">    containing the processed data, a `numpy` `ndarray` of labels for that data, and the vectorizer used to build the bag</span>
+<span class="sd">    of words.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data: A `pandas` `DataFrame` object containing the data to be preprocessed.</span>
+
+<span class="sd">        vectorizer: If it exists, the vectorizer used on the training data. This is to ensure that the training and</span>
+<span class="sd">        testing data were built using the same vectorizer. When supplied, the function assumes that this is testing data</span>
+<span class="sd">        and builds using the already established vectorizer. By default this is `None`, which causes the function to</span>
+<span class="sd">        assume this is testing data and build a new vectorizer. Including this will cause the parameters `is_tf`,</span>
+<span class="sd">        `use_stop_words`, and `is_binary` to be ignored if supplied because they will already have been set when the</span>
+<span class="sd">        vectorizer was initialized.</span>
+
+<span class="sd">        label_column: A string indicating the name of the of the column to be used as the labels for the data. By</span>
+<span class="sd">        default, this is &quot;isSatire&quot;.</span>
+
+<span class="sd">        bag_of_words_column: A string indicating the name of the column to be used as the source for the bag of words</span>
+<span class="sd">        data. By default, this is &quot;Body&quot;.</span>
+
+<span class="sd">        is_tf: A boolean value indicating whether or not to use the TF-IDF weighting. Default is `False`, which means</span>
+<span class="sd">        that a simple word count will be used instead.</span>
+
+<span class="sd">        use_stop_words: A boolean value indicating whether or not to use English &quot;stop words.&quot; Default is `True`, which</span>
+<span class="sd">        means that common English stop words will be removed from analysis.</span>
+
+<span class="sd">        is_binary: A boolean value indicating whether or not to use a binary weighting. Default is `True`, which means</span>
+<span class="sd">        that all words will be given a value of 0 if they do not appear in a given text and 1 if they appear at least</span>
+<span class="sd">        once.</span>
+
+<span class="sd">        feature_columns: A list of strings indicating column names to be used as features. They will all be normalized.</span>
+<span class="sd">        By default, this is all values used in testing. Pass an empty list to include no additional features.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        This function returns a `pandas` `DataFrame` containing the processed data, a `numpy` `ndarray` of labels for</span>
+<span class="sd">        that data, and the bag of words vectorizer.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        Additional errors may be thrown by dependencies.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Get data labels.</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">label_column</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="c1"># Build the bag of words.</span>
+    <span class="n">bag_of_words</span><span class="p">,</span> <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">get_bag_of_words</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">bag_of_words_column</span><span class="p">],</span> <span class="n">vectorizer</span><span class="p">,</span> <span class="n">is_tf</span><span class="p">,</span> <span class="n">use_stop_words</span><span class="p">,</span> <span class="n">is_binary</span><span class="p">)</span>
+
+    <span class="c1"># Extract the relevant features.</span>
+    <span class="k">if</span> <span class="n">feature_columns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">feature_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ARI&#39;</span><span class="p">,</span> <span class="s1">&#39;FR&#39;</span><span class="p">,</span> <span class="s1">&#39;GF&#39;</span><span class="p">,</span> <span class="s1">&#39;avgSyl&#39;</span><span class="p">,</span> <span class="s1">&#39;linkCount&#39;</span><span class="p">,</span> <span class="s1">&#39;profanityCount&#39;</span><span class="p">,</span> <span class="s1">&#39;senCount&#39;</span><span class="p">,</span> <span class="s1">&#39;titleARI&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;titleAvgSyl&#39;</span><span class="p">,</span> <span class="s1">&#39;titleFR&#39;</span><span class="p">,</span> <span class="s1">&#39;titleGF&#39;</span><span class="p">,</span> <span class="s1">&#39;titleWordCount&#39;</span><span class="p">,</span> <span class="s1">&#39;twitChar&#39;</span><span class="p">,</span> <span class="s1">&#39;wordCount&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">scale_features</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">feature_columns</span><span class="p">,</span> <span class="n">bag_of_words</span><span class="p">),</span> <span class="n">labels</span><span class="p">,</span> <span class="n">vectorizer</span></div>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This function preprocesses the data, preparing it for use by the CLSTM classifier. It returns a `pandas` `DataFrame` </span>
+<span class="sd">containing the processed data, a `numpy` `ndarray` of labels for that data, the tokenizer, and the max_length parameter.</span>
+<span class="sd">    Parameters:</span>
+
+<span class="sd">        data - A `pandas` `DataFrame` object containing the data to be preprocessed.</span>
+<span class="sd">        </span>
+<span class="sd">        tokenizer - A tokenizer to use to preprocess the data. If not included, this function will assume the data is</span>
+<span class="sd">                    for training and build a new tokenizer. If provided, the function will assume this is testing data</span>
+<span class="sd">                    and build based on the provided tokenizer. It is important that the parameters `append_title`, </span>
+<span class="sd">                    `max_words`, and `max_length` are the same for training and testing. By default this is `None` and a </span>
+<span class="sd">                    new tokenizer is built.</span>
+
+<span class="sd">        label_column - A string indicating the name of the of the column to be used as the labels for the data. By </span>
+<span class="sd">                       default, this is &quot;isSatire&quot;.</span>
+<span class="sd">                       </span>
+<span class="sd">        append_title - A boolean value indicating whether or not to append the article title to the front of the body</span>
+<span class="sd">                       so that it is included in the analysis. By default, this is `True`, so the title is appended.</span>
+
+<span class="sd">        max_words - An int indicating the maximum size of the dictionary used in tokenization. The top max_words used</span>
+<span class="sd">                    in the corpus (based on frequency) will be retained. By default, this is `None`, which uses all</span>
+<span class="sd">                    available words. For a sufficiently large corpus, this can dramatically and unnecessarily increase</span>
+<span class="sd">                    compute time. Recommended max size for the corpus used in this thesis about 20,000.</span>
+<span class="sd">                    </span>
+<span class="sd">        max_length - The maximum length of an article to consider. Articles longer than this will be truncated and</span>
+<span class="sd">                     shorter articles will be padded with null. By default this is the length of the longest article.</span>
+<span class="sd">                     Again, for a significantly large corpus this increases compute time dramatically without a</span>
+<span class="sd">                     performance benefit. Look at the distribution of article length in your corpus to set. Recommended</span>
+<span class="sd">                     at 4000 for the corpus used in this thesis.</span>
+
+
+<span class="sd">    Returns:</span>
+<span class="sd">    It returns a `pandas` `DataFrame` containing the processed data, a `numpy` `ndarray` of labels for that data, the </span>
+<span class="sd">    tokenizer, the max_words, and the max_length parameter. `max_words` and `max_length` are returned in case they are</span>
+<span class="sd">    computed relative to the data because they are needed when preprocessing the testing data.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span> <span class="nf">preprocess_clstm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">tokenizer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label_column</span><span class="o">=</span><span class="s2">&quot;isSatire&quot;</span><span class="p">,</span> <span class="n">append_title</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_words</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="c1"># Get data labels.</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">label_column</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="c1"># Append the title to the body if specified.</span>
+    <span class="k">if</span> <span class="n">append_title</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Body&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">Title</span> <span class="o">+</span> <span class="s2">&quot;. &quot;</span> <span class="o">+</span> <span class="n">x</span><span class="o">.</span><span class="n">Body</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Check if we already have a tokenizer to use.</span>
+    <span class="k">if</span> <span class="n">tokenizer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">as_sequence</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">texts_to_sequences</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">Body</span><span class="p">)</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pad_sequences</span><span class="p">(</span><span class="n">as_sequence</span><span class="p">,</span> <span class="n">maxlen</span><span class="o">=</span><span class="n">max_length</span><span class="p">))</span>  <span class="c1"># Pad for use with CLSTM.</span>
+        <span class="n">test</span><span class="p">[</span><span class="n">test</span> <span class="o">&gt;</span> <span class="n">max_words</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Replace any words not in the dictionary with nulls.</span>
+        <span class="k">return</span> <span class="n">test</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">max_length</span>
+
+    <span class="c1"># Otherwise, build a new tokenizer.</span>
+    <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">Tokenizer</span><span class="p">(</span><span class="n">num_words</span><span class="o">=</span><span class="n">max_words</span><span class="p">)</span>
+    <span class="n">tokenizer</span><span class="o">.</span><span class="n">fit_on_texts</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">Body</span><span class="p">)</span>
+    <span class="n">as_sequence</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">texts_to_sequences</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">Body</span><span class="p">)</span>
+
+    <span class="c1"># If not provided, calculate the maximum length.</span>
+    <span class="k">if</span> <span class="n">max_length</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">max_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">as_sequence</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">))</span>
+
+    <span class="c1"># If not provided, calculate the maximum number of words.</span>
+    <span class="k">if</span> <span class="n">max_words</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">max_words</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">word_index</span><span class="p">)</span>
+
+    <span class="c1"># Pad for use with CLSTM and return.</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pad_sequences</span><span class="p">(</span><span class="n">as_sequence</span><span class="p">,</span> <span class="n">maxlen</span><span class="o">=</span><span class="n">max_length</span><span class="p">)),</span> <span class="n">labels</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">max_words</span><span class="p">,</span> <span class="n">max_length</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This function learns hyper-parameters for the SVM for a specific data set and a specific range of parameters.</span>
+<span class="sd">This function makes heavy use of standard `sk-learn` functions.</span>
+<span class="sd">    Parameters:</span>
+<span class="sd">        data - A `pandas` `DataFrame` object containing the preprocessed data.</span>
+
+<span class="sd">        labels - The labels for data.</span>
+
+<span class="sd">        params - Hyperparameters to be tested. By default, these are `class_weight` as &quot;balanced&quot; and `None` and `C`</span>
+<span class="sd">                 from 10^-5 to 10^3. Please refer to the `sk-learn` documentation for more information.</span>
+
+<span class="sd">        scoring - The metrics to be used for judging classifier efficiency, as specified in `sk-learn` documentation.</span>
+<span class="sd">                  The default is &#39;accuracy&#39;.</span>
+
+<span class="sd">        verbose - A boolean value indicating whether or not to print all of the data returned from the results. Default</span>
+<span class="sd">                  is `False`, which doesn&#39;t print anything.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary of the hyperparameters found to fit best with this data.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span> <span class="nf">train_svm_hyperparameters</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+    <span class="c1"># Set the parameters to be tried.</span>
+    <span class="k">if</span> <span class="n">params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;class_weight&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;balanced&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+                  <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">10</span> <span class="o">**</span> <span class="mi">3</span><span class="p">]}</span>
+
+    <span class="c1"># Use the sk-learn library to find the best hyperparameters.</span>
+    <span class="n">svc</span> <span class="o">=</span> <span class="n">LinearSVC</span><span class="p">()</span>
+    <span class="n">classifier</span> <span class="o">=</span> <span class="n">GridSearchCV</span><span class="p">(</span><span class="n">svc</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="n">scoring</span><span class="p">)</span>
+    <span class="n">classifier</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+
+    <span class="c1"># Print the results.</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">classifier</span><span class="o">.</span><span class="n">cv_results_</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Best parameters: &quot;</span><span class="p">,</span> <span class="n">classifier</span><span class="o">.</span><span class="n">best_params_</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Best score: &quot;</span><span class="p">,</span> <span class="n">classifier</span><span class="o">.</span><span class="n">best_score_</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Best estimator: &quot;</span><span class="p">,</span> <span class="n">classifier</span><span class="o">.</span><span class="n">best_estimator_</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">classifier</span><span class="o">.</span><span class="n">best_params_</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This function uses the provided data to build an SVM classifier.</span>
+<span class="sd">    Parameters:</span>
+
+<span class="sd">        data - A `pandas` `DataFrame`, likely returned from either `preprocess_svm` or preprocess_nn` on which the</span>
+<span class="sd">               classification will be performed.</span>
+<span class="sd">        </span>
+<span class="sd">        labels - A `numpy` `ndarray` containing the labels for the data.</span>
+<span class="sd">                         </span>
+<span class="sd">                          </span>
+<span class="sd">        params - Hyperparameters to be used in classification.</span>
+<span class="sd">                 </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        This function returns a classifier trained on the provided data.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span> <span class="nf">build_svm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+
+    <span class="c1"># Build using the specified parameters.</span>
+    <span class="n">svc</span> <span class="o">=</span> <span class="n">LinearSVC</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+    <span class="c1"># Fit on the provided data and return.</span>
+    <span class="k">return</span> <span class="n">svc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This function uses the provided data to build a CLSTM classifier. The default values provided reflect the best </span>
+<span class="sd">performance  on the data set used for this thesis.</span>
+<span class="sd">    Parameters:</span>
+
+<span class="sd">        data - A `pandas` `DataFrame`, likely returned from either `preprocess_svm` or preprocess_nn` on which the</span>
+<span class="sd">               classification will be performed.</span>
+
+<span class="sd">        labels - A `numpy` `ndarray` containing the labels for the data.</span>
+
+
+<span class="sd">        max_words - The max_words of the embedding, as specified in preprocessing.</span>
+<span class="sd">        </span>
+<span class="sd">        max_length - The maximum length of the embedding, as specified in preprocessing.</span>
+<span class="sd">        </span>
+<span class="sd">        is_cluster - A boolean value indicating whether or not to configure this for a cluster computer. Default is</span>
+<span class="sd">                     `False` and the configuration is not changed.</span>
+<span class="sd">                     </span>
+<span class="sd">        embedding_size - An integer indicating the size of the embedding layer. Default is 100.</span>
+<span class="sd">        </span>
+<span class="sd">        dropout - A decimal indicating the dropout value. Default is 0.3.</span>
+<span class="sd">        </span>
+<span class="sd">        filters - An integer indicating the number of filters in the convolutional layer. Default is 64.</span>
+<span class="sd">        </span>
+<span class="sd">        kernel - An integer indicating the kernel size of the convolutional layer. Default is 3.</span>
+<span class="sd">        </span>
+<span class="sd">        conv_activation - A string indicating the type of activation function for the convolutional layer. Default is</span>
+<span class="sd">                          &#39;relu&#39;.</span>
+<span class="sd">                          </span>
+<span class="sd">        lstm_units - An integer indicating the number of units to use in the LSTM. Default is 64.</span>
+<span class="sd">        </span>
+<span class="sd">        dense_activation - A string indicating the type of activation function to use for the dense layer. Default is</span>
+<span class="sd">                           &#39;sigmoid&#39;.</span>
+<span class="sd">                           </span>
+<span class="sd">        metrics - A list indicating the metrics to use when evaluating classifier performance. Default is to use</span>
+<span class="sd">                  accuracy, precision, recall, and F Score.</span>
+<span class="sd">                  </span>
+<span class="sd">        early_stopping - A boolean indicating whether or not to stop early if the classifier performs worse on a given</span>
+<span class="sd">                         epoch. Default is `True`, so the training will stop if performance degrades.</span>
+<span class="sd">                         </span>
+<span class="sd">        batch_size - An integer indicating the batch size to use in training. Default is 512.</span>
+<span class="sd">        </span>
+<span class="sd">        epochs - An integer indicating the number of epochs to use in training. Default is 10. Fewer epochs may be used</span>
+<span class="sd">                 in practice if early_stopping is `True`.</span>
+<span class="sd">                 </span>
+<span class="sd">        shuffle - A boolean indicating whether or not to shuffle the data. Default is `True`.</span>
+<span class="sd">        </span>
+<span class="sd">        class_weight - A dictionary of weights for different classes. This can boost performance in cases where one </span>
+<span class="sd">                       class is much bigger than the other.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        This function returns a classifier trained on the provided data.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span> <span class="nf">build_clstm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">max_words</span><span class="p">,</span> <span class="n">max_length</span><span class="p">,</span> <span class="n">is_cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">embedding_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+                <span class="n">kernel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">conv_activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">lstm_units</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">dense_activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">early_stopping</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">class_weight</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="c1"># Set configuration for cluster computer if indicated.</span>
+    <span class="k">if</span> <span class="n">is_cluster</span><span class="p">:</span>
+        <span class="n">config_cluster</span><span class="p">()</span>
+
+    <span class="c1"># Build the CLSTM model with Keras.</span>
+    <span class="n">model_clstm</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+    <span class="n">model_clstm</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Embedding</span><span class="p">(</span><span class="n">max_words</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">embedding_size</span><span class="p">,</span> <span class="n">input_length</span><span class="o">=</span><span class="n">max_length</span><span class="p">))</span>
+    <span class="n">model_clstm</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">))</span>
+    <span class="n">model_clstm</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv1D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">conv_activation</span><span class="p">))</span>
+    <span class="n">model_clstm</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">LSTM</span><span class="p">(</span><span class="n">units</span><span class="o">=</span><span class="n">lstm_units</span><span class="p">))</span>
+    <span class="n">model_clstm</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">dense_activation</span><span class="p">))</span>
+
+    <span class="c1"># Fill in default metrics if none provided.</span>
+    <span class="k">if</span> <span class="n">metrics</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="n">get_precision</span><span class="p">,</span> <span class="n">get_recall</span><span class="p">,</span> <span class="n">get_f_score</span><span class="p">]</span>
+
+    <span class="c1"># Compile the model.</span>
+    <span class="n">model_clstm</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="s1">&#39;binary_crossentropy&#39;</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;Adam&#39;</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">)</span>
+
+    <span class="c1"># Set early stopping if instructed.</span>
+    <span class="k">if</span> <span class="n">early_stopping</span><span class="p">:</span>
+        <span class="n">callbacks</span> <span class="o">=</span> <span class="p">[</span><span class="n">EarlyStopping</span><span class="p">(</span><span class="n">monitor</span><span class="o">=</span><span class="s1">&#39;loss&#39;</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">callbacks</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># Fit and return the CLSTM.</span>
+    <span class="n">model_clstm</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">labels</span><span class="p">),</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span>
+                    <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">,</span> <span class="n">class_weight</span><span class="o">=</span><span class="n">class_weight</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">model_clstm</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This function finally evaluates the CLSTM on the test data.</span>
+<span class="sd">Parameters: </span>
+<span class="sd">    model - The CLSTM model to be evaluated on.</span>
+<span class="sd">    </span>
+<span class="sd">    data - The data to be tested on.</span>
+<span class="sd">    </span>
+<span class="sd">    labels - The true labels for the testing data.</span>
+<span class="sd">    </span>
+<span class="sd">    verbose - A boolean indicating whether or not to print the results. By default `False` and no results are printed.</span>
+<span class="sd">    </span>
+<span class="sd">    print_latex - A boolean indicating whether or not to print the results formatted for a LaTeX table. Default is </span>
+<span class="sd">                  `False` which does not print results in this format.</span>
+<span class="sd">                  </span>
+<span class="sd">Returns:</span>
+<span class="sd">    Returns the results.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span> <span class="nf">test_clstm</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_latex</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+    <span class="c1"># Evaluate the data and print the results.</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+
+    <span class="c1"># Print formatted for LaTeX table.</span>
+    <span class="k">if</span> <span class="n">print_latex</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; </span><span class="si">%.4f</span><span class="s2"> &amp; </span><span class="si">%.4f</span><span class="s2"> &amp; </span><span class="si">%.4f</span><span class="s2"> &amp; </span><span class="si">%.4f</span><span class="s2"> </span><span class="se">\\\\</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="mi">4</span><span class="p">]))</span>
+
+    <span class="k">return</span> <span class="n">results</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This function finally evaluates the SVM model on the test data.</span>
+<span class="sd">Parameters:</span>
+<span class="sd">    model - The SVM model to be evaluated on.</span>
+<span class="sd">    </span>
+<span class="sd">    data - The data to be tested on.</span>
+<span class="sd">    </span>
+<span class="sd">    labels - The true labels for the testing data.</span>
+<span class="sd">    </span>
+<span class="sd">    iteration - An integer corresponding to the iteration number this is. By default, `None`.</span>
+<span class="sd">    </span>
+<span class="sd">    verbose - A boolean indicating whether or not all data should be printed. By default, `False` and no data is </span>
+<span class="sd">              printed.</span>
+<span class="sd">              </span>
+<span class="sd">    print_latex - A boolean indicating whether or not to print all data as a row in a `LaTeX` table. Default is `False`</span>
+<span class="sd">                  and no data is printed.</span>
+<span class="sd">                  </span>
+<span class="sd">Returns:</span>
+<span class="sd">    Returns accuracy, precision, recall, and F Score for the tested data.</span>
+<span class="sd">    </span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span> <span class="nf">test_svm</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_latex</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+    <span class="c1"># Predict labels.</span>
+    <span class="n">predicted_labels</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="c1"># Get performance measures.</span>
+    <span class="k">return</span> <span class="n">get_measures</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">predicted_labels</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">print_latex</span><span class="o">=</span><span class="n">print_latex</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Senior Thesis</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Adam Hare.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -33,12 +33,192 @@
             
   <div class="section" id="documentation-for-senior-thesis">
 <h1>Documentation for Senior Thesis<a class="headerlink" href="#documentation-for-senior-thesis" title="Permalink to this headline">¶</a></h1>
+<p>The following provides some documentation for the functions ued in the <em>Senior Thesis</em> repository. They are broken up by
+source file, going from highest level to lowest level.</p>
 <div class="toctree-wrapper compound">
 </div>
 <ul class="simple">
 <li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
 <li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
 </ul>
+<div class="section" id="documentation-for-exampleapplication-py">
+<h2>Documentation for <cite>exampleApplication.py</cite><a class="headerlink" href="#documentation-for-exampleapplication-py" title="Permalink to this headline">¶</a></h2>
+<p><em>This file provides a few high-level examples of how one might use the functions in</em> <cite>pythonAPI.py</cite> <em>to achieve
+something similar to the thesis.</em></p>
+<dl class="function">
+<dt id="exampleApplication.main">
+<code class="descclassname">exampleApplication.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/exampleApplication.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exampleApplication.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>A main function which simply runs <cite>full_svm_test</cite> and <cite>full_clstm_test</cite>.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>None.</dd>
+<dt>Returns:</dt>
+<dd>None.</dd>
+<dt>Raises:</dt>
+<dd>IndexError: Can result from <cite>from_files</cite> function.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="exampleApplication.full_svm_test">
+<code class="descclassname">exampleApplication.</code><code class="descname">full_svm_test</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/exampleApplication.html#full_svm_test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exampleApplication.full_svm_test" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is designed to demonstrate the full functionality of the pythonAPI functions for the SVM. It reads
+data from files, builds features, formats them, builds the classifier, tests, and returns the results of the test.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>None.</dd>
+<dt>Returns:</dt>
+<dd>None.</dd>
+<dt>Raises:</dt>
+<dd>IndexError: Can result from <cite>from_files</cite> function.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="exampleApplication.full_clstm_test">
+<code class="descclassname">exampleApplication.</code><code class="descname">full_clstm_test</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/exampleApplication.html#full_clstm_test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exampleApplication.full_clstm_test" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is designed to demonstrate the full functionality of the pythonAPI functions for the CLSTM. It reads
+data from files, builds features, formats them, builds the classifier, tests, and returns the results of the test.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>None.</dd>
+<dt>Returns:</dt>
+<dd>None.</dd>
+<dt>Raises:</dt>
+<dd>IndexError: Can result from <cite>from_files</cite> function.</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="documentation-for-pythonapi-py">
+<h2>Documentation for <cite>pythonAPI.py</cite><a class="headerlink" href="#documentation-for-pythonapi-py" title="Permalink to this headline">¶</a></h2>
+<p><em>This file contains a few higher level functions to handle data parsing, SVM testing, SVM hyper-parameter testing, and
+CLSTM testing.</em></p>
+<dl class="function">
+<dt id="pythonAPI.from_files">
+<code class="descclassname">pythonAPI.</code><code class="descname">from_files</code><span class="sig-paren">(</span><em>files</em>, <em>frac=1</em>, <em>shuffle=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pythonAPI.html#from_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pythonAPI.from_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function takes a list of csv files as input. It reads those files into <cite>pandas</cite> <cite>DataFrame</cite> objects and
+combines them. This function makes no effort to ensure that the input files are formatted in the same way.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">files: A list of paths to the csv files to be read.</p>
+<p>frac: How much of each file will be read. By default 1, which reads all available data. Should range between 0
+and 1. Set this to a lower number for debugging classifiers.</p>
+<p class="last">shuffle: A boolean value indicating whether or not to shuffle the data. Default is <cite>True</cite>, which shuffles all
+data.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>A <cite>pandas</cite> <cite>DataFrame</cite> built from the files provided by the argument <cite>files</cite>.</dd>
+<dt>Raises:</dt>
+<dd>IndexError: This error will be thrown if <cite>files</cite> is empty. May also return errors from <cite>pandas</cite>.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pythonAPI.parse_data">
+<code class="descclassname">pythonAPI.</code><code class="descname">parse_data</code><span class="sig-paren">(</span><em>data</em>, <em>target_file=None</em>, <em>run_all=False</em>, <em>count_profane=False</em>, <em>profane_dict_file='profaneWords.csv'</em>, <em>label=None</em>, <em>encode_date=False</em>, <em>date_range=range(2010</em>, <em>2018)</em>, <em>title_word_count=False</em>, <em>word_count=False</em>, <em>title_syl_count=False</em>, <em>body_syl_count=False</em>, <em>sentence_count=False</em>, <em>link_count=False</em>, <em>twitter_count=False</em>, <em>title_fr_score=False</em>, <em>fr_score=False</em>, <em>title_gf_score=False</em>, <em>gf_score=False</em>, <em>title_ari_score=False</em>, <em>ari_score=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pythonAPI.html#parse_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pythonAPI.parse_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function does all necessary parsing on a given <cite>pandas</cite> <cite>DataFrame</cite> based on given parameters. It assumes the
+<cite>DataFrame</cite> is formatted as in one of the provided csv files, although not all fields are needed to start.
+Specifically, the <cite>Body</cite>, <cite>Date</cite>, and <cite>Title</cite> columns are required although they can be empty. All parsing is off
+by default.</p>
+<p>Note: All boolean parameters are <cite>False</cite> by default. This indicates that no calculation will be made. If this
+function is passed only the <cite>data</cite> argument, it will do nothing. Additionally, running each of these will
+overwrite whatever is in the column they write to but will not change any other columns.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">data: A <cite>pandas</cite> <cite>DataFrame</cite> with the relevant data.</p>
+<p>target_file: If specified, a target file to write to all results to. Otherwise, no file is written. Default is
+<cite>None</cite>, indicating no data will be written.</p>
+<p>run_all: A boolean value indicating whether or not to build all features. Overrides all following parameters
+except <cite>profane_dict_file</cite> and <cite>date_range</cite>. By default <cite>False</cite>, meaning that all other parameters are followed
+as specified.</p>
+<p>count_profane: If <cite>True</cite>, count the number of profane words and place in ‘profanityCount’ column.</p>
+<p>profane_dict_file: The name of the csv file from which to read the dictionary of profane words. By default,
+‘profaneWords.csv’. Setting this has no effect if count_profane=False. This csv should contain only regular
+expressions of what will be identified as profane words. See included file <cite>profaneWords.csv</cite> for an example.</p>
+<p>label: If specified, indicates whether or not an article is satire. Default is <cite>None</cite>, which skips adding a
+label. If 0, every row in the data is given a label of 0 for non-satirical. If 1, every row is given a
+label of 1 for satirical. Throws an error if given something other than 0 or 1. Writes to ‘isSatire’ column.</p>
+<p>encode_date: A boolean value indicating whether or not to do one-hot encoding on the date field. <cite>True</cite> does
+the encoding. Writes to columns with the year as the name.</p>
+<p>date_range: A range of dates to consider. Only valid if encode_date=True. Default is 2010-2017 inclusive.</p>
+<p>title_word_count: A boolean indicating whether or not to generate a word count for the title. Writes to
+‘titleWordCount’ column if <cite>True</cite>.</p>
+<p>word_count: A boolean indicating whether or not to generate a word count for the body. Writes to ‘wordCount’
+column if <cite>True</cite>.</p>
+<p>title_syl_count: A boolean indicating whether or not to generate a title average syllable count. Writes to
+‘titleAvgSyl’ column if <cite>True</cite>. Only valid if titleWordCount column is populated.</p>
+<p>body_syl_count: A boolean indicating whether or not to generate a body average syllable count.  Writes to
+‘avgSyl’ column if <cite>True</cite>. Only valid if wordCount column is populated.</p>
+<p>sentence_count: A boolean indicating whether or not to generate a count of the number of sentences in the body.
+Writes to ‘senCount’ column if <cite>True</cite>.</p>
+<p>link_count: A boolean indicating whether or not to generate a count of the number of links found in the body of
+the articles.  Writes to ‘linkCount’ column if <cite>True</cite>.</p>
+<p>twitter_count: A boolean indicating whether or not to generate a count of the number of Twitter characters found
+in the body. Writes to ‘twitChar’ column if <cite>True</cite>.</p>
+<p>title_fr_score: A boolean indicating whether or not to run Flesch Reading Ease scoring algorithm on the title.
+Writes to ‘titleFR’ column if <cite>True</cite>.</p>
+<p>fr_score: A boolean indicating whether or not to run Flesch Reading Ease scoring algorithm on the body. Writes
+to ‘FR’ column if <cite>True</cite>.</p>
+<p>title_gf_score: A boolean indicating whether or not to run the Gunning Fog scoring algorithm on the title.
+Writes to ‘titleGF’ column if <cite>True</cite>.</p>
+<p>gf_score: A boolean indicating whether or not to run the Gunning Fog scoring algorithm on the body. Writes to
+‘GF’ column if <cite>True</cite>.</p>
+<p>title_ari_score: A boolean indicating whether or not to run the Automated Readability Index algorithm on the
+title. Writes to ‘titleARI’ column if <cite>True</cite>.</p>
+<p class="last">ari_score: A boolean indicating whether or not to run the Automated Readability Index algorithm on the body.
+Writes to ‘ARI’ column if <cite>True</cite>.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>This function returns a <cite>pandas</cite> <cite>DataFrame</cite> object with the desired parsed fields added.</dd>
+<dt>Raises:</dt>
+<dd><p class="first">ValueError: This error will be thrown if <cite>date_range</cite> is specified but <cite>encode_date=False</cite>.</p>
+<p>IndexError: This error will be thrown if the program tries to parse a field that relies on a field that does not
+yet exist.</p>
+<p class="last">Additional errors may be thrown by dependencies.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pythonAPI.preprocess_svm">
+<code class="descclassname">pythonAPI.</code><code class="descname">preprocess_svm</code><span class="sig-paren">(</span><em>data</em>, <em>vectorizer=None</em>, <em>label_column='isSatire'</em>, <em>bag_of_words_column='Body'</em>, <em>is_tf=False</em>, <em>use_stop_words=True</em>, <em>is_binary=True</em>, <em>feature_columns=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pythonAPI.html#preprocess_svm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pythonAPI.preprocess_svm" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function preprocesses the data, preparing it for use by an SVM classifier. It returns a <cite>pandas</cite> <cite>DataFrame</cite>
+containing the processed data, a <cite>numpy</cite> <cite>ndarray</cite> of labels for that data, and the vectorizer used to build the bag
+of words.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">data: A <cite>pandas</cite> <cite>DataFrame</cite> object containing the data to be preprocessed.</p>
+<p>vectorizer: If it exists, the vectorizer used on the training data. This is to ensure that the training and
+testing data were built using the same vectorizer. When supplied, the function assumes that this is testing data
+and builds using the already established vectorizer. By default this is <cite>None</cite>, which causes the function to
+assume this is testing data and build a new vectorizer. Including this will cause the parameters <cite>is_tf</cite>,
+<cite>use_stop_words</cite>, and <cite>is_binary</cite> to be ignored if supplied because they will already have been set when the
+vectorizer was initialized.</p>
+<p>label_column: A string indicating the name of the of the column to be used as the labels for the data. By
+default, this is “isSatire”.</p>
+<p>bag_of_words_column: A string indicating the name of the column to be used as the source for the bag of words
+data. By default, this is “Body”.</p>
+<p>is_tf: A boolean value indicating whether or not to use the TF-IDF weighting. Default is <cite>False</cite>, which means
+that a simple word count will be used instead.</p>
+<p>use_stop_words: A boolean value indicating whether or not to use English “stop words.” Default is <cite>True</cite>, which
+means that common English stop words will be removed from analysis.</p>
+<p>is_binary: A boolean value indicating whether or not to use a binary weighting. Default is <cite>True</cite>, which means
+that all words will be given a value of 0 if they do not appear in a given text and 1 if they appear at least
+once.</p>
+<p class="last">feature_columns: A list of strings indicating column names to be used as features. They will all be normalized.
+By default, this is all values used in testing. Pass an empty list to include no additional features.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>This function returns a <cite>pandas</cite> <cite>DataFrame</cite> containing the processed data, a <cite>numpy</cite> <cite>ndarray</cite> of labels for
+that data, and the bag of words vectorizer.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+</div>
 </div>
 
 

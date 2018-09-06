@@ -3,4 +3,11 @@
 
 # Ignore all files in .idea
 .idea/**
+
+# Ignore Sphinx files
 _build/**
+_static/**
+_templates/**
+conf.py
+index.rst
+Makefile

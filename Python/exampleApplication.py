@@ -112,7 +112,7 @@ def full_clstm_test():
 
 def main():
     """
-    A main function which simply runs `full_svm_test` and `full_clstm_test`
+    A main function which simply runs `full_svm_test` and `full_clstm_test`.
 
     Args:
         None.

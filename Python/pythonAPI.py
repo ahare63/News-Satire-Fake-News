@@ -26,101 +26,28 @@ from classifierLib import config_cluster, get_bag_of_words, get_f_score, get_pre
 from parserLib import get_avg_syl_count, get_encoded_date, get_link_count, get_profanity_count
 
 
-"""
-This function takes a list of files as input. It reads those files into `pandas` `DataFrame` objects and combines them.
-
-Parameters:
-    files - A list of paths to the files to be read.
-
-    percentage - The percentage of each file to be read. By default 1, which reads all available data. Should range
-                 between 0 and 1. Set this to a lower number for debugging classifiers.
-
-    shuffle - A boolean value indicating whether or not to shuffle the data. Default is `True`, which shuffles all data.
-"""
-
-
 def from_files(files, frac=1, shuffle=True):
-    return merge_data(files, frac, shuffle)
+    """
+    This function takes a list of csv files as input. It reads those files into `pandas` `DataFrame` objects and
+    combines them. This function makes no effort to ensure that the input files are formatted in the same way.
 
+    Args:
+        files: A list of paths to the csv files to be read.
 
-"""
-This function does all necessary parsing on a given `pandas` `DataFrame` based on given parameters. It assumes the 
-`DataFrame` is formatted as in one of the provided csv files, although not all fields are needed to start. Specifically,
-the `Body`, `Date`, and `Title` columns are required although they can be empty. All parsing is off by default.
+        frac: How much of each file will be read. By default 1, which reads all available data. Should range between 0
+        and 1. Set this to a lower number for debugging classifiers.
 
-    Parameters:
-        # Note: all boolean parameters are `False` by default. This indicates that no calculation will be made. If this
-        # function is passed only the filename parameter, it will do nothing. Additionally, running each of these will 
-        # overwrite whatever is in the column they write to but not change any other columns.
-    
-        data - A `pandas` `DataFrame` with the relevant data.
-                        
-        target_file - If specified, a target file to write to. Otherwise, no file is written. Default is `None`,
-                      indicating no data will be written.
-                      
-        run_all - A boolean value indicating whether or not to build all features. Overrides all subsequent parameters
-                  except profane_dict_file and date_range. By default `False`, meaning that all other parameters are
-                  followed as specified.
-                      
-        count_profane - If `True`, count the number of profane words and place in 'profanityCount' column.
-        
-        profane_dict_file - The name of the csv file from which to read the dictionary of profane words. By default,
-                            'profaneWords.csv'. Setting this has no effect if count_profane=False. This csv should 
-                            contain only regular expressions of what will be identified as profane words. See included 
-                            file `profaneWords.csv` for an example.
-                            
-        label - If specified, indicates whether or not an article is satire. Default is `None`, which skips adding a
-                    label. If 0, every article in the file is given a label of 0 for non-satirical. If 1, every article
-                    is given a label of 1 for satirical. Throws an error if given something other than 0 or 1.
-                    Writes to 'isSatire' column.
-                    
-        encode_date - A boolean value indicating whether or not to do one-hot encoding on the date field. `True` does
-                      the encoding. Writes to columns with the year as the name.
-                      
-        date_range - A range of dates to consider. Only valid if encode_date=True. Default is 2010-2017 inclusive.
-        
-        title_word_count - A boolean indicating whether or not to generate a word count for the title. Writes to 
-                           'titleWordCount' column if `True`.
-                           
-        word_count - A boolean indicating whether or not to generate a word count for the body. Writes to 'wordCount' 
-                     column if `True`.
-                     
-        title_syl_count - A boolean indicating whether or not to generate a title average syllable count. Writes to 
-                         'titleAvgSyl' column if `True`. Only valid if titleWordCount column is populated.
-                         
-        body_syl_count - A boolean indicating whether or not to generate a body average syllable count.  Writes to 
-                         'avgSyl' column if `True`. Only valid if wordCount column is populated.
-                         
-        sentence_count - A boolean indicating whether or not to generate a count of the number of sentences in the body.
-                         Writes to 'senCount' column if `True`.
-                         
-        link_count - A boolean indicating whether or not to generate a count of the number of links found in the body
-                     of the articles.  Writes to 'linkCount' column if `True`.
-                     
-        twitter_count - A boolean indicating whether or not to generate a count of the number of Twitter characters
-                        found in the body. Writes to 'twitChar' column if `True`.
-                        
-        title_fr_score - A boolean indicating whether or not to run Flesch Reading Ease scoring algorithm on the title. 
-                         Writes to 'titleFR' column if `True`.
-                         
-        fr_score - A boolean indicating whether or not to run Flesch Reading Ease scoring algorithm on the body. 
-                   Writes to 'FR' column if `True`.
-                        
-        title_gf_score - A boolean indicating whether or not to run the Gunning Fog scoring algorithm on the title. 
-                         Writes to 'titleGF' column if `True`.
-                         
-        gf_score - A boolean indicating whether or not to run the Gunning Fog scoring algorithm on the body. 
-                   Writes to 'GF' column if `True`.
-                   
-        title_ari_score - A boolean indicating whether or not to run the Automated Readability Index algorithm on the 
-                          title. Writes to 'titleARI' column if `True`.
-                         
-        ari_score - A boolean indicating whether or not to run the Automated Readability Index algorithm on the body. 
-                    Writes to 'ARI' column if `True`.
-                        
+        shuffle: A boolean value indicating whether or not to shuffle the data. Default is `True`, which shuffles all
+        data.
+
     Returns:
-        This function returns a `pandas` `DataFrame` object with the desired parsed fields added.
-"""
+        A `pandas` `DataFrame` built from the files provided by the argument `files`.
+
+    Raises:
+        IndexError: This error will be thrown if `files` is empty. May also return errors from `pandas`.
+
+    """
+    return merge_data(files, frac, shuffle)
 
 
 def parse_data(data, target_file=None, run_all=False, count_profane=False, profane_dict_file='profaneWords.csv',
@@ -128,6 +55,93 @@ def parse_data(data, target_file=None, run_all=False, count_profane=False, profa
                word_count=False, title_syl_count=False, body_syl_count=False, sentence_count=False, link_count=False,
                twitter_count=False, title_fr_score=False, fr_score=False, title_gf_score=False, gf_score=False,
                title_ari_score=False, ari_score=False):
+
+    """
+    This function does all necessary parsing on a given `pandas` `DataFrame` based on given parameters. It assumes the
+    `DataFrame` is formatted as in one of the provided csv files, although not all fields are needed to start.
+    Specifically, the `Body`, `Date`, and `Title` columns are required although they can be empty. All parsing is off
+    by default.
+
+    Note: All boolean parameters are `False` by default. This indicates that no calculation will be made. If this
+    function is passed only the `data` argument, it will do nothing. Additionally, running each of these will
+    overwrite whatever is in the column they write to but will not change any other columns.
+
+    Args:
+        data: A `pandas` `DataFrame` with the relevant data.
+
+        target_file: If specified, a target file to write to all results to. Otherwise, no file is written. Default is
+        `None`, indicating no data will be written.
+
+        run_all: A boolean value indicating whether or not to build all features. Overrides all following parameters
+        except `profane_dict_file` and `date_range`. By default `False`, meaning that all other parameters are followed
+        as specified.
+
+        count_profane: If `True`, count the number of profane words and place in 'profanityCount' column.
+
+        profane_dict_file: The name of the csv file from which to read the dictionary of profane words. By default,
+        'profaneWords.csv'. Setting this has no effect if count_profane=False. This csv should contain only regular
+        expressions of what will be identified as profane words. See included file `profaneWords.csv` for an example.
+
+        label: If specified, indicates whether or not an article is satire. Default is `None`, which skips adding a
+        label. If 0, every row in the data is given a label of 0 for non-satirical. If 1, every row is given a
+        label of 1 for satirical. Throws an error if given something other than 0 or 1. Writes to 'isSatire' column.
+
+        encode_date: A boolean value indicating whether or not to do one-hot encoding on the date field. `True` does
+        the encoding. Writes to columns with the year as the name.
+
+        date_range: A range of dates to consider. Only valid if encode_date=True. Default is 2010-2017 inclusive.
+
+        title_word_count: A boolean indicating whether or not to generate a word count for the title. Writes to
+        'titleWordCount' column if `True`.
+
+        word_count: A boolean indicating whether or not to generate a word count for the body. Writes to 'wordCount'
+        column if `True`.
+
+        title_syl_count: A boolean indicating whether or not to generate a title average syllable count. Writes to
+        'titleAvgSyl' column if `True`. Only valid if titleWordCount column is populated.
+
+        body_syl_count: A boolean indicating whether or not to generate a body average syllable count.  Writes to
+        'avgSyl' column if `True`. Only valid if wordCount column is populated.
+
+        sentence_count: A boolean indicating whether or not to generate a count of the number of sentences in the body.
+        Writes to 'senCount' column if `True`.
+
+        link_count: A boolean indicating whether or not to generate a count of the number of links found in the body of
+        the articles.  Writes to 'linkCount' column if `True`.
+
+        twitter_count: A boolean indicating whether or not to generate a count of the number of Twitter characters found
+        in the body. Writes to 'twitChar' column if `True`.
+
+        title_fr_score: A boolean indicating whether or not to run Flesch Reading Ease scoring algorithm on the title.
+        Writes to 'titleFR' column if `True`.
+
+        fr_score: A boolean indicating whether or not to run Flesch Reading Ease scoring algorithm on the body. Writes
+        to 'FR' column if `True`.
+
+        title_gf_score: A boolean indicating whether or not to run the Gunning Fog scoring algorithm on the title.
+        Writes to 'titleGF' column if `True`.
+
+        gf_score: A boolean indicating whether or not to run the Gunning Fog scoring algorithm on the body. Writes to
+        'GF' column if `True`.
+
+        title_ari_score: A boolean indicating whether or not to run the Automated Readability Index algorithm on the
+        title. Writes to 'titleARI' column if `True`.
+
+        ari_score: A boolean indicating whether or not to run the Automated Readability Index algorithm on the body.
+        Writes to 'ARI' column if `True`.
+
+    Returns:
+        This function returns a `pandas` `DataFrame` object with the desired parsed fields added.
+
+    Raises:
+        ValueError: This error will be thrown if `date_range` is specified but `encode_date=False`.
+
+        IndexError: This error will be thrown if the program tries to parse a field that relies on a field that does not
+        yet exist.
+
+        Additional errors may be thrown by dependencies.
+
+    """
 
     # Check to see if the run_all flag has been set to True.
     if run_all:
@@ -206,53 +220,51 @@ def parse_data(data, target_file=None, run_all=False, count_profane=False, profa
     return data
 
 
-"""
-This function preprocesses the data, preparing it for use by an SVM classifier. It returns a `pandas` `DataFrame` 
-containing the processed data, a `numpy` `ndarray` of labels for that data, and the vectorizer used to build the bag of
-words.
-    Parameters:
-
-        data - A `pandas` `DataFrame` object containing the data to be preprocessed.
-        
-        vectorizer - If it exists, the vectorizer used on the training data. This is to ensure that the training and 
-                     testing data were built using the same vectorizer. When supplied, the function assumes that this is
-                     testing data and builds using the already established vectorizer. By default this is `None`, which
-                     causes the function to assume this is testing data and build a new vectorizer. Including this will
-                     cause the parameters `is_tf`, `use_stop_words`, and `is_binary` to be ignored if supplied because
-                     they will already have been set when the vectorizer was initialized.
-
-        label_column - A string indicating the name of the of the column to be used as the labels for the data. By 
-                       default, this is "isSatire".
-
-        bag_of_words_column - A string indicating the name of the column to be used as the source for the bag of words
-                              data. By default, this is "Body".
-
-        is_tf - A boolean value indicating whether or not to use the TF-IDF weighting. Default is `False`, which means
-                that a simple word count will be used instead.
-
-        use_stop_words - A boolean value indicating whether or not to use English "stop words." Default is `True`, 
-                         which means that common English stop words will be removed from analysis.
-
-        is_binary - A boolean value indicating whether or not to use a binary weighting. Default is `True`, which means
-                    that all words will be given a value of 0 if they do not appear in a given text and 1 if they appear
-                    at least once.
-
-        feature_columns - A list of strings indicating column names to be used as features. They will all be normalized.
-                          By default, this is all values used in testing. Pass an empty list to include no additional
-                          features.
-
-        params - Hyperparameters to be tested. By default, these are `class_weight` as "balanced" and `None` and `C`
-                 from 10^-5 to 10^3. Please refer to the `sk-learn` documentation for more information.
-
-
-    Returns:
-        This function returns a `pandas` `DataFrame` containing the processed data, a `numpy` `ndarray` of labels 
-        for that data, and the bag of words vectorizer.
-"""
-
-
 def preprocess_svm(data, vectorizer=None, label_column="isSatire", bag_of_words_column="Body", is_tf=False,
                    use_stop_words=True, is_binary=True, feature_columns=None):
+
+    """
+    This function preprocesses the data, preparing it for use by an SVM classifier. It returns a `pandas` `DataFrame`
+    containing the processed data, a `numpy` `ndarray` of labels for that data, and the vectorizer used to build the bag
+    of words.
+
+    Args:
+        data: A `pandas` `DataFrame` object containing the data to be preprocessed.
+
+        vectorizer: If it exists, the vectorizer used on the training data. This is to ensure that the training and
+        testing data were built using the same vectorizer. When supplied, the function assumes that this is testing data
+        and builds using the already established vectorizer. By default this is `None`, which causes the function to
+        assume this is testing data and build a new vectorizer. Including this will cause the parameters `is_tf`,
+        `use_stop_words`, and `is_binary` to be ignored if supplied because they will already have been set when the
+        vectorizer was initialized.
+
+        label_column: A string indicating the name of the of the column to be used as the labels for the data. By
+        default, this is "isSatire".
+
+        bag_of_words_column: A string indicating the name of the column to be used as the source for the bag of words
+        data. By default, this is "Body".
+
+        is_tf: A boolean value indicating whether or not to use the TF-IDF weighting. Default is `False`, which means
+        that a simple word count will be used instead.
+
+        use_stop_words: A boolean value indicating whether or not to use English "stop words." Default is `True`, which
+        means that common English stop words will be removed from analysis.
+
+        is_binary: A boolean value indicating whether or not to use a binary weighting. Default is `True`, which means
+        that all words will be given a value of 0 if they do not appear in a given text and 1 if they appear at least
+        once.
+
+        feature_columns: A list of strings indicating column names to be used as features. They will all be normalized.
+        By default, this is all values used in testing. Pass an empty list to include no additional features.
+
+    Returns:
+        This function returns a `pandas` `DataFrame` containing the processed data, a `numpy` `ndarray` of labels for
+        that data, and the bag of words vectorizer.
+
+    Raises:
+        Additional errors may be thrown by dependencies.
+
+    """
 
     # Get data labels.
     labels = data[label_column].values

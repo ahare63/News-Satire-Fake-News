@@ -1,18 +1,36 @@
 .. Senior Thesis documentation master file, created by
-   sphinx-quickstart on Wed Sep  5 19:19:14 2018.
+   sphinx-quickstart on Wed Sep  5 22:15:05 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
 Documentation for Senior Thesis
 ===============================
+The following provides some documentation for the functions ued in the *Senior Thesis* repository. They are broken up by
+source file, going from highest level to lowest level.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
 
-
-
-
 * :ref:`genindex`
+* :ref:`modindex`
 * :ref:`search`
+
+Documentation for `exampleApplication.py`
+-----------------------------------------
+*This file provides a few high-level examples of how one might use the functions in* `pythonAPI.py` *to achieve
+something similar to the thesis.*
+
+.. autofunction:: exampleApplication.main
+.. autofunction:: exampleApplication.full_svm_test
+.. autofunction:: exampleApplication.full_clstm_test
+
+Documentation for `pythonAPI.py`
+--------------------------------
+*This file contains a few higher level functions to handle data parsing, SVM testing, SVM hyper-parameter testing, and
+CLSTM testing.*
+
+.. autofunction:: pythonAPI.from_files
+.. autofunction:: pythonAPI.parse_data
+.. autofunction:: pythonAPI.preprocess_svm
