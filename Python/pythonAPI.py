@@ -27,6 +27,7 @@ from parserLib import get_avg_syl_count, get_encoded_date, get_link_count, get_p
 
 
 def from_files(files, frac=1, shuffle=True):
+
     """
     This function takes a list of csv files as input. It reads those files into `pandas` `DataFrame` objects and
     combines them. This function makes no effort to ensure that the input files are formatted in the same way.
@@ -279,45 +280,44 @@ def preprocess_svm(data, vectorizer=None, label_column="isSatire", bag_of_words_
     return scale_features(data, feature_columns, bag_of_words), labels, vectorizer
 
 
-"""
-This function preprocesses the data, preparing it for use by the CLSTM classifier. It returns a `pandas` `DataFrame` 
-containing the processed data, a `numpy` `ndarray` of labels for that data, the tokenizer, and the max_length parameter.
-    Parameters:
+def preprocess_clstm(data, tokenizer=None, label_column="isSatire", append_title=True, max_words=None, max_length=None):
 
-        data - A `pandas` `DataFrame` object containing the data to be preprocessed.
-        
-        tokenizer - A tokenizer to use to preprocess the data. If not included, this function will assume the data is
-                    for training and build a new tokenizer. If provided, the function will assume this is testing data
-                    and build based on the provided tokenizer. It is important that the parameters `append_title`, 
-                    `max_words`, and `max_length` are the same for training and testing. By default this is `None` and a 
-                    new tokenizer is built.
+    """
+    This function preprocesses the data, preparing it for use by the CLSTM classifier.
 
-        label_column - A string indicating the name of the of the column to be used as the labels for the data. By 
-                       default, this is "isSatire".
-                       
-        append_title - A boolean value indicating whether or not to append the article title to the front of the body
-                       so that it is included in the analysis. By default, this is `True`, so the title is appended.
+    Args:
+        data: A `pandas` `DataFrame` object containing the data to be preprocessed.
 
-        max_words - An int indicating the maximum size of the dictionary used in tokenization. The top max_words used
-                    in the corpus (based on frequency) will be retained. By default, this is `None`, which uses all
-                    available words. For a sufficiently large corpus, this can dramatically and unnecessarily increase
-                    compute time. Recommended max size for the corpus used in this thesis about 20,000.
-                    
-        max_length - The maximum length of an article to consider. Articles longer than this will be truncated and
-                     shorter articles will be padded with null. By default this is the length of the longest article.
-                     Again, for a significantly large corpus this increases compute time dramatically without a
-                     performance benefit. Look at the distribution of article length in your corpus to set. Recommended
-                     at 4000 for the corpus used in this thesis.
+        tokenizer: A tokenizer to use to preprocess the data. If not included, this function will assume the data is for
+        training and build a new tokenizer. If provided, the function will assume this is testing data and build based
+        on the provided tokenizer. It is important that the parameters `append_title`, `max_words`, and `max_length` are
+        the same for training and testing. By default this is `None` and a new tokenizer is built.
+
+        label_column: A string indicating the name of the of the column to be used as the labels for the data. By
+        default, this is "isSatire".
+
+        append_title: A boolean value indicating whether or not to append the article title to the front of the body so
+        that it is included in the analysis. By default, this is `True`, so the title is appended.
+
+        max_words: An int indicating the maximum size of the dictionary used in tokenization. The top max_words used in
+        the corpus (based on frequency) will be retained. By default, this is `None`, which uses all available words.
+        For a sufficiently large corpus, this can dramatically and unnecessarily increase compute time. Recommended max
+        size for the corpus used in this thesis about 20,000.
+
+        max_length: The maximum length of an article to consider. Articles longer than this will be truncated and
+        shorter articles will be padded with null. By default this is the length of the longest article. Again, for a
+        significantly large corpus this increases compute time dramatically without a performance benefit. Look at the
+        distribution of article length in your corpus to set. Recommended at 4000 for the corpus used in this thesis.
 
 
     Returns:
-    It returns a `pandas` `DataFrame` containing the processed data, a `numpy` `ndarray` of labels for that data, the 
-    tokenizer, the max_words, and the max_length parameter. `max_words` and `max_length` are returned in case they are
-    computed relative to the data because they are needed when preprocessing the testing data.
-"""
+        This function returns a `pandas` `DataFrame` containing the processed data, a `numpy` `ndarray` of labels for
+        that data, the tokenizer, max_words, and max_length. `max_words` and `max_length` are returned in case they are
+        computed relative to the data because they are needed when preprocessing the testing data.
 
-
-def preprocess_clstm(data, tokenizer=None, label_column="isSatire", append_title=True, max_words=None, max_length=None):
+    Raises:
+        Additional errors may be thrown by dependencies.
+    """
 
     # Get data labels.
     labels = data[label_column].values
@@ -350,28 +350,34 @@ def preprocess_clstm(data, tokenizer=None, label_column="isSatire", append_title
     return np.array(pad_sequences(as_sequence, maxlen=max_length)), labels, tokenizer, max_words, max_length
 
 
-"""
-This function learns hyper-parameters for the SVM for a specific data set and a specific range of parameters.
-This function makes heavy use of standard `sk-learn` functions.
-    Parameters:
-        data - A `pandas` `DataFrame` object containing the preprocessed data.
+def train_svm_hyperparameters(data, labels, params=None, scoring='accuracy', verbose=False):
 
-        labels - The labels for data.
+    """
+    This function learns hyper-parameters for the SVM for a specific data set and a specific range of parameters. This
+    function makes heavy use of standard `sk-learn` functions.
 
-        params - Hyperparameters to be tested. By default, these are `class_weight` as "balanced" and `None` and `C`
-                 from 10^-5 to 10^3. Please refer to the `sk-learn` documentation for more information.
+    Args:
+        data: A `pandas` `DataFrame` object containing the data to be preprocessed.
 
-        scoring - The metrics to be used for judging classifier efficiency, as specified in `sk-learn` documentation.
-                  The default is 'accuracy'.
+        labels: The labels for data in the form of a `numpy` `ndarray`.
 
-        verbose - A boolean value indicating whether or not to print all of the data returned from the results. Default
-                  is `False`, which doesn't print anything.
+        params: Hyperparameters to be tested in the form of a dict. By default, these are `class_weight` as
+        "balanced" and `None` and `C` from 10^-5 to 10^3. Please refer to the `sk-learn` documentation for more
+        information.
+
+        scoring: The metric to be used for judging classifier performance, as specified in `sk-learn` documentation.
+        The default is 'accuracy'.
+
+        verbose: A boolean value indicating whether or not to print all of the data returned from the results.
+        Default is `False`, which doesn't print anything.
+
+
     Returns:
         A dictionary of the hyperparameters found to fit best with this data.
-"""
 
-
-def train_svm_hyperparameters(data, labels, params=None, scoring='accuracy', verbose=False):
+    Raises:
+        Additional errors may be thrown by dependencies.
+   """
 
     # Set the parameters to be tried.
     if params is None:
@@ -393,24 +399,26 @@ def train_svm_hyperparameters(data, labels, params=None, scoring='accuracy', ver
     return classifier.best_params_
 
 
-"""
-This function uses the provided data to build an SVM classifier.
-    Parameters:
-
-        data - A `pandas` `DataFrame`, likely returned from either `preprocess_svm` or preprocess_nn` on which the
-               classification will be performed.
-        
-        labels - A `numpy` `ndarray` containing the labels for the data.
-                         
-                          
-        params - Hyperparameters to be used in classification.
-                 
-    Returns:
-        This function returns a classifier trained on the provided data.
-"""
-
-
 def build_svm(data, labels, params):
+
+    """
+    This function uses the provided data to build an SVM classifier.
+
+    Args:
+        data: A `pandas` `DataFrame`, likely returned from `preprocess_svm` on which the classification will be
+        performed.
+
+        labels: A `numpy` `ndarray` containing the labels for the data.
+
+        params: Hyperparameters to be used in classification in the form of a dict.
+
+
+    Returns:
+        This function returns an SVM classifier trained on the provided data.
+
+    Raises:
+        Additional errors may be thrown by dependencies.
+   """
 
     # Build using the specified parameters.
     svc = LinearSVC(**params)
@@ -419,64 +427,64 @@ def build_svm(data, labels, params):
     return svc.fit(data, labels)
 
 
-"""
-This function uses the provided data to build a CLSTM classifier. The default values provided reflect the best 
-performance  on the data set used for this thesis.
-    Parameters:
-
-        data - A `pandas` `DataFrame`, likely returned from either `preprocess_svm` or preprocess_nn` on which the
-               classification will be performed.
-
-        labels - A `numpy` `ndarray` containing the labels for the data.
-
-
-        max_words - The max_words of the embedding, as specified in preprocessing.
-        
-        max_length - The maximum length of the embedding, as specified in preprocessing.
-        
-        is_cluster - A boolean value indicating whether or not to configure this for a cluster computer. Default is
-                     `False` and the configuration is not changed.
-                     
-        embedding_size - An integer indicating the size of the embedding layer. Default is 100.
-        
-        dropout - A decimal indicating the dropout value. Default is 0.3.
-        
-        filters - An integer indicating the number of filters in the convolutional layer. Default is 64.
-        
-        kernel - An integer indicating the kernel size of the convolutional layer. Default is 3.
-        
-        conv_activation - A string indicating the type of activation function for the convolutional layer. Default is
-                          'relu'.
-                          
-        lstm_units - An integer indicating the number of units to use in the LSTM. Default is 64.
-        
-        dense_activation - A string indicating the type of activation function to use for the dense layer. Default is
-                           'sigmoid'.
-                           
-        metrics - A list indicating the metrics to use when evaluating classifier performance. Default is to use
-                  accuracy, precision, recall, and F Score.
-                  
-        early_stopping - A boolean indicating whether or not to stop early if the classifier performs worse on a given
-                         epoch. Default is `True`, so the training will stop if performance degrades.
-                         
-        batch_size - An integer indicating the batch size to use in training. Default is 512.
-        
-        epochs - An integer indicating the number of epochs to use in training. Default is 10. Fewer epochs may be used
-                 in practice if early_stopping is `True`.
-                 
-        shuffle - A boolean indicating whether or not to shuffle the data. Default is `True`.
-        
-        class_weight - A dictionary of weights for different classes. This can boost performance in cases where one 
-                       class is much bigger than the other.
-
-    Returns:
-        This function returns a classifier trained on the provided data.
-"""
-
-
 def build_clstm(data, labels, max_words, max_length, is_cluster=False, embedding_size=100, dropout=0.3, filters=64,
                 kernel=3, conv_activation='relu', lstm_units=64, dense_activation='sigmoid', metrics=None,
                 early_stopping=True, batch_size=512, epochs=10, shuffle=True, class_weight=None):
+    """
+    This function uses the provided data to build a CLSTM classifier. The default values provided reflect the best
+    performance on the data set used for this thesis.
+
+    Args:
+        data: A `pandas` `DataFrame`, likely returned from `preprocess_clstm` on which the classification will be
+        performed.
+
+        labels: A `numpy` `ndarray` containing the labels for the data.
+
+        max_words: The max_words of the embedding, as specified in preprocessing.
+
+        max_length: The maximum length of the embedding, as specified in preprocessing.
+
+        is_cluster: A boolean value indicating whether or not to configure this for a cluster computer. Default is
+        `False` and the configuration is not changed.
+
+        embedding_size: An integer indicating the size of the embedding layer. Default is 100.
+
+        dropout: A decimal indicating the dropout parameter. Default is 0.3.
+
+        filters: An integer indicating the number of filters in the convolutional layer. Default is 64.
+
+        kernel: An integer indicating the kernel size of the convolutional layer. Default is 3.
+
+        conv_activation: A string indicating the type of activation function for the convolutional layer. Default is
+        'relu'.
+
+        lstm_units: An integer indicating the number of units to use in the LSTM. Default is 64.
+
+        dense_activation: A string indicating the type of activation function to use for the dense layer. Default is
+        'sigmoid'.
+
+        metrics: A list indicating the metrics to use when evaluating classifier performance. Default is to use
+        accuracy, precision, recall, and F Score.
+
+        early_stopping: A boolean indicating whether or not to stop early if the classifier performs worse on a given
+        epoch. Default is `True`, so the training will stop if performance degrades.
+
+        batch_size: An integer indicating the batch size to use in training. Default is 512.
+
+        epochs: An integer indicating the number of epochs to use in training. Default is 10. Fewer epochs may be used
+        in practice if early_stopping is `True`.
+
+        shuffle: A boolean indicating whether or not to shuffle the data. Default is `True`.
+
+        class_weight: A dict of weights for different classes. This can boost performance in cases where one class is
+        much bigger than the other. Default is `None` and all classes are weighted equally.
+
+    Returns:
+        This function returns a CLSTM classifier trained on the provided data.
+
+    Raises:
+        Additional errors may be thrown by dependencies.
+   """
 
     # Set configuration for cluster computer if indicated.
     if is_cluster:
@@ -509,26 +517,60 @@ def build_clstm(data, labels, max_words, max_length, is_cluster=False, embedding
     return model_clstm
 
 
-"""
-This function finally evaluates the CLSTM on the test data.
-Parameters: 
-    model - The CLSTM model to be evaluated on.
-    
-    data - The data to be tested on.
-    
-    labels - The true labels for the testing data.
-    
-    verbose - A boolean indicating whether or not to print the results. By default `False` and no results are printed.
-    
-    print_latex - A boolean indicating whether or not to print the results formatted for a LaTeX table. Default is 
-                  `False` which does not print results in this format.
-                  
-Returns:
-    Returns the results.
-"""
+def test_svm(model, data, labels, verbose=False, print_latex=False):
+    """
+    This function finally evaluates the SVM model on the test data.
+
+    Args:
+        model: The SVM model to be evaluated on, likely returned from `build_svm`.
+
+        data: A `pandas` `DataFrame`, likely returned from `preprocess_svm` on which the classifier will be evaluated.
+
+        labels: A `numpy` `ndarray` containing the true labels for the testing data.
+
+        verbose: A boolean indicating whether or not all data should be printed. By default, `False` and no data is
+        printed.
+
+        print_latex: A boolean indicating whether or not to print all data as a row in a `LaTeX` table. Default is
+        `False` and no data is printed.
+
+    Returns:
+        Returns accuracy, precision, recall, and F Score for the tested data.
+
+    Raises:
+        Additional errors may be thrown by dependencies.
+   """
+
+    # Predict labels.
+    predicted_labels = model.predict(data)
+
+    # Get performance measures.
+    return get_measures(labels, predicted_labels, iteration=None, verbose=verbose, print_latex=print_latex)
 
 
 def test_clstm(model, data, labels, verbose=False, print_latex=False):
+    """
+    This function finally evaluates the CLSTM on the test data.
+
+    Args:
+        model: The CLSTM model to be evaluated on, likely returned from `build_clstm`.
+
+        data: A `pandas` `DataFrame`, likely returned from `preprocess_svm` on which the classifier will be evaluated.
+
+        labels: A `numpy` `ndarray` containing the true labels for the testing data.
+
+        verbose: A boolean indicating whether or not all data should be printed. By default, `False` and no data is
+        printed.
+
+        print_latex: A boolean indicating whether or not to print all data as a row in a `LaTeX` table. Default is
+        `False` and no data is printed.
+
+    Returns:
+        Returns the results from `keras`.
+
+    Raises:
+        Additional errors may be thrown by dependencies.
+   """
 
     # Evaluate the data and print the results.
     results = model.evaluate(data, np.array(labels))
@@ -540,35 +582,3 @@ def test_clstm(model, data, labels, verbose=False, print_latex=False):
         print(" %.4f & %.4f & %.4f & %.4f \\\\" % (results[1], results[2], results[3], results[4]))
 
     return results
-
-
-"""
-This function finally evaluates the SVM model on the test data.
-Parameters:
-    model - The SVM model to be evaluated on.
-    
-    data - The data to be tested on.
-    
-    labels - The true labels for the testing data.
-    
-    iteration - An integer corresponding to the iteration number this is. By default, `None`.
-    
-    verbose - A boolean indicating whether or not all data should be printed. By default, `False` and no data is 
-              printed.
-              
-    print_latex - A boolean indicating whether or not to print all data as a row in a `LaTeX` table. Default is `False`
-                  and no data is printed.
-                  
-Returns:
-    Returns accuracy, precision, recall, and F Score for the tested data.
-    
-"""
-
-
-def test_svm(model, data, labels, verbose=False, print_latex=False):
-
-    # Predict labels.
-    predicted_labels = model.predict(data)
-
-    # Get performance measures.
-    return get_measures(labels, predicted_labels, iteration=None, verbose=verbose, print_latex=print_latex)

@@ -19,29 +19,33 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 import tensorflow as tf
 
-"""
-Given a `pandas` `DataFrame`, this function splits it into two parts based on the provided fraction and returns
-both. Valid values for `frac` range from 0 to 1 inclusive. If shuffle is `True`, all data is shuffled, otherwise it 
-is returned in the order it was read.
-Parameters: 
-    data - The data to be split, in the form of a `pandas` `DataFrame`.
-    
-    frac - The fraction of data to be put in the first result. The rest will be returned in the second result.
-           This number should range from 0 to 1 inclusive, where 0 puts all data in the second result and 1 puts all 
-           data in the first result.
-                 
-    shuffle - A boolean value indicating whether or not to shuffle the data. When set to `True`, the data is shuffled.
-    
-Returns:
-    Two `pandas` `DataFrame` objects, the first with `frac` * 100 percent of the data and the other with 
-    (1-`frac`) * 100 percent of the data.
-"""
-
 
 def split_data(data, frac, shuffle):
+    """
+    Given a `pandas` `DataFrame`, this function splits it into two parts based on the provided fraction and returns
+    both.
+
+    Args:
+        data: The data to be split, in the form of a `pandas` `DataFrame`.
+
+        frac: The fraction of data to be put in the first result. The rest will be returned in the second result. This
+        number should range from 0 to 1 inclusive, where 0 puts all data in the second result and 1 puts all data in the
+        first result.
+
+        shuffle: A boolean value indicating whether or not to shuffle the data. If `False`, the data will be returned
+        in the order it was received.
+
+    Returns:
+        Two `pandas` `DataFrame` objects, the first with `frac` * 100 percent of the data and the other with (1-`frac`)
+        * 100 percent of the data.
+
+    Raises:
+        ValueError: Thrown if the `frac` parameter is not between 0 and 1.
+   """
+
     # Ensure frac is a valid decimal.
     if frac < 0 or frac > 1:
-        raise ValueError('Percentage must be between zero and one.')
+        raise ValueError('Frac must be between zero and one.')
     else:
         n = len(data)
         n_first = int(n*frac)
@@ -52,42 +56,44 @@ def split_data(data, frac, shuffle):
             return data.loc[:n_first], data.loc[n_first:]
 
 
-"""
-This function takes a list of file paths to csv files, reads each into a `pandas` `DataFrame` object, and returns a
-`DataFrame` consisting of the data from all of these files combined. This is useful for combining data from different
-files. Before combining files, it reduces them to a percentage specified by the percentage parameter. This ensures
-that each file is proportionally represented if not all data is needed by the function calling merge_data. If shuffle
-is set to `False`, all data will be maintained in order.
-Parameters:
-    file_names - The paths to the files to be merged as a list.
-    
-    frac - The fraction of each data in each file to be retained. This can vary from 0 to 1 inclusive, with 0 resulting
-           in no data being read from any of the files and 1 reading all available data.
-           
-    shuffle - A boolean value indicating whether or not the data will be shuffled. If `False`, the data will be returned
-              in the order it appeared in each file, in the order the files were given in the list.
-              
-Returns:
-    One `pandas` `DataFrame` with all of the read data.
-"""
+def merge_data(file_names, frac, shuffle):
+    """
+    This function takes a list of file paths to csv files, reads each into a `pandas` `DataFrame` object, and returns a
+    `DataFrame` consisting of the data from all of these files combined. This is useful for combining data from
+    different files.
 
+    Args:
+        file_names: The paths to the files to be merged as a list.
 
-def merge_data(file_names, percentage, shuffle):
+        frac: The fraction of each data in each file to be retained. This can vary from 0 to 1 inclusive, with 0
+        resulting in no data being read from any of the files and 1 reading all available data.
+
+        shuffle: A boolean value indicating whether or not the data will be shuffled. If `False`, the data will be
+        returned in the order it appeared in each file, in the order the files were given in the list.
+
+    Returns:
+        One `pandas` `DataFrame` with all of the read data.
+
+    Raises:
+        IndexError: Thrown if no file_names is an empty list.
+
+        ValueError: Thrown by `split_data` if `frac` is invalid.
+   """
 
     try:
         file = file_names.pop(0)
         data = pd.read_csv(file, index_col=0)
 
         # Split the data if required. Skip this possibly expensive operation if all data is used.
-        if percentage != 1:
-            data, _ = split_data(data, percentage, shuffle)
+        if frac != 1:
+            data, _ = split_data(data, frac, shuffle)
 
         for f in file_names:
             new_data = pd.read_csv(f, index_col=0)
 
             # Split the data if required. Skip this possibly expensive operation if all data is used.
-            if percentage != 1:
-                new_data, _ = split_data(new_data, percentage, shuffle)
+            if frac != 1:
+                new_data, _ = split_data(new_data, frac, shuffle)
 
             # Concatenate this with the all of the data already read.
             data = pd.concat([data, new_data], ignore_index=True)
@@ -99,32 +105,37 @@ def merge_data(file_names, percentage, shuffle):
         print('Must include at least one data file.')
 
 
-"""
-This function creates and returns a weighted bag of words from the data based on the provided parameters. data is
-expected to be a single column from a `pandas` `DataFrame`, typically "Body" in this use case.
-Parameters:
-    data - The data to be read.
-    
-    vectorizer - The model used to make the bag of words. If `None`, a new bag of words is created by the other
-                 parameters. If provided, following parameters are ignored and the vectorizer is used instead.
-                 
-    is_tf - A boolean value indicating whether or not to use the TF-IDF weighting. If `True`, TF-IDF is used and if
-            `False` the appearances of words are simply counted.
-            
-    use_stop_words - A boolean value indicating whether or not to remove common stop words from the data. When `True`,
-                     common English stop words are used and when `False` all words are considered.
-                     
-    is_binary - A boolean value indicating whether or not to use a binary weighting for word appearances. If `True`,
-                any words that appear at least once will get a weight of 1 and all words that don't appear a weight 0.
-                This carries over to TF-IDF, but the TF-IDF still returns a range of values, only considering the word
-                count part of it as binary.
-                
-Returns:
-    The bag of words data and the vectorizer used to create it.
-"""
-
-
 def get_bag_of_words(data, vectorizer, is_tf, use_stop_words, is_binary):
+    """
+    This function creates and returns a weighted bag of words from the data based on the provided parameters. `data` is
+    expected to be a single column from a `pandas` `DataFrame`, typically "Body" in this use case.
+
+    Args:
+
+        data: A `pandas` `DataFrame` from which the bag of words will be built.
+
+        vectorizer: The model used to make the bag of words. If `None`, a new bag of words is created by the other
+        parameters. If provided, following parameters are ignored and the vectorizer is used instead.
+
+        is_tf: A boolean value indicating whether or not to use the TF-IDF weighting. If `True`, TF-IDF is used and if
+        `False` the appearances of words are simply counted.
+
+        use_stop_words: A boolean value indicating whether or not to remove common stop words from the data. When
+        `True`, common English stop words are removed and when `False` all words are considered.
+
+        is_binary: A boolean value indicating whether or not to use a binary weighting for word appearances. If `True`,
+        any words that appear at least once will get a weight of 1 and all words that don't appear a weight 0. This
+        carries over to TF-IDF, but the TF-IDF still returns a range of values, only considering the word count part of
+        it as binary.
+
+
+    Returns:
+        The bag of words data and the vectorizer used to create it.
+
+    Raises:
+        Additional errors may be thrown by dependencies.
+   """
+
     # Check if we got a vectorizer, in which case use it and return.
     if vectorizer is not None:
         return vectorizer.transform(data), vectorizer
@@ -145,24 +156,28 @@ def get_bag_of_words(data, vectorizer, is_tf, use_stop_words, is_binary):
     return vectorizer.fit_transform(data), vectorizer
 
 
-"""
-This function scales and returns the appropriate feature columns. 
-Parameters:
-    data - The `pandas` `DataFrame` containing the relevant data.
-    
-    feature_list - A string list of features to be used in analysis, in this case the names of the columns in `data` to
-                   be used.
-                   
-    additional_features - Any additional features not provided in `data` that need to be added. In this case,
-                          'additional_features` is often the bag of words returned by get_bag_of_words.
-                          
-Returns:
-    A `numpy` `ndarray` consisting of the columns of `feature_list` scaled and concatenated with those in 
-    `additional_data`.
-"""
-
-
 def scale_features(data, feature_list, additional_features):
+    """
+    This function scales and returns the appropriate feature columns.
+
+    Args:
+
+        data: The `pandas` `DataFrame` containing the relevant data.
+
+        feature_list: A string list of features to be used in analysis, in this case the names of the columns in `data`
+        to be used.
+
+        additional_features: Any additional features not provided in `data` that need to be added. In this case,
+        'additional_features` is often the bag of words returned by get_bag_of_words.
+
+    Returns:
+        A `numpy` `ndarray` consisting of the columns of `feature_list` scaled and concatenated with those in
+        `additional_data`.
+
+    Raises:
+        Additional errors may be thrown by dependencies.
+   """
+
     # Ensure we have some features from the data to scale.
     if feature_list:
         features = preprocessing.scale(data[list(feature_list)].values)
@@ -172,57 +187,66 @@ def scale_features(data, feature_list, additional_features):
     return additional_features
 
 
-""""
-Calculate precision. This is drawn from old `keras` source code.
-Parameters: 
-    y_true - The ground truth labels for the data set.
-    
-    y_predicted - The predicted labels for the data set, as returned by the classifier.
-    
-Returns:
-   A float signifying the classifier's precision on the given data set. 
-"""
-
-
 def get_precision(y_true, y_predicted):
+    """
+    Calculate precision. This is drawn from old `keras` source code.
+
+    Args:
+        y_true: The ground truth labels for the data set.
+
+        y_predicted: The predicted labels for the data set, as returned by the classifier.
+
+    Returns:
+        A float signifying the classifier's precision on the given data set.
+
+    Raises:
+        Additional errors may be thrown by dependencies.
+   """
+
     true_positives = k.sum(k.round(k.clip(y_true * y_predicted, 0, 1)))
     predicted_positives = k.sum(k.round(k.clip(y_predicted, 0, 1)))
     precision = true_positives / (predicted_positives + k.epsilon())
     return precision
 
 
-""""
-Calculate recall. This is drawn from old `keras` source code.
-Parameters: 
-    y_true - The ground truth labels for the data set.
-
-    y_predicted - The predicted labels for the data set, as returned by the classifier.
-
-Returns:
-   A float signifying the classifier's recall on the given data set. 
-"""
-
-
 def get_recall(y_true, y_predicted):
+    """
+    Calculate recall. This is drawn from old `keras` source code.
+
+    Args:
+        y_true: The ground truth labels for the data set.
+
+        y_predicted: The predicted labels for the data set, as returned by the classifier.
+
+    Returns:
+        A float signifying the classifier's recall on the given data set.
+
+    Raises:
+        Additional errors may be thrown by dependencies.
+   """
+
     true_positives = k.sum(k.round(k.clip(y_true * y_predicted, 0, 1)))
     possible_positives = k.sum(k.round(k.clip(y_true, 0, 1)))
     recall = true_positives / (possible_positives + k.epsilon())
     return recall
 
 
-""""
-Calculate F Score.
-Parameters: 
-    y_true - The ground truth labels for the data set.
-
-    y_predicted - The predicted labels for the data set, as returned by the classifier.
-
-Returns:
-   A float signifying the classifier's F Score on the given data set. 
-"""
-
-
 def get_f_score(y_true, y_predicted):
+    """
+    Calculate F Score.
+
+    Args:
+        y_true: The ground truth labels for the data set.
+
+        y_predicted: The predicted labels for the data set, as returned by the classifier.
+
+    Returns:
+        A float signifying the classifier's F Score on the given data set.
+
+    Raises:
+        Additional errors may be thrown by dependencies.
+   """
+
     pre = get_precision(y_true, y_predicted)
     rec = get_recall(y_true, y_predicted)
     return (2*pre*rec)/(pre + rec)
