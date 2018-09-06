@@ -15,5 +15,4 @@ Documentation for Senior Thesis
 
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

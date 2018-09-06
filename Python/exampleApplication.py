@@ -1,9 +1,11 @@
-## File: exampleApplication.py
-# Author: Adam Hare <adamth@alumni.princeton.edu>
-# Last Updated: 4 September 2018
+"""
+File: exampleApplication.py
+Author: Adam Hare <adamth@alumni.princeton.edu>
+Last Updated: 4 September 2018
 
-## Description:
-# This file contains an example application of the functions in pythonAPI.py.
+Description:
+This file contains an example application of the functions in pythonAPI.py.
+"""
 
 import pandas as pd
 
@@ -15,11 +17,15 @@ def full_svm_test():
     """
     This function is designed to demonstrate the full functionality of the pythonAPI functions for the SVM. It reads
     data from files, builds features, formats them, builds the classifier, tests, and returns the results of the test.
-    Parameters:
+
+    Args:
         None.
 
     Returns:
         None.
+
+    Raises:
+        IndexError: Can result from `from_files` function.
 
     """
 
@@ -61,11 +67,15 @@ def full_clstm_test():
     """
     This function is designed to demonstrate the full functionality of the pythonAPI functions for the CLSTM. It reads
     data from files, builds features, formats them, builds the classifier, tests, and returns the results of the test.
-    Parameters:
+
+    Args:
         None.
 
     Returns:
         None.
+
+    Raises:
+        IndexError: Can result from `from_files` function.
 
     """
 
@@ -102,11 +112,17 @@ def full_clstm_test():
 
 def main():
     """
-    Main function which simply runs each of these tests.
-    Parameters:
+    A main function which simply runs `full_svm_test` and `full_clstm_test`
+
+    Args:
         None.
+
     Returns:
-        None
+        None.
+
+    Raises:
+        IndexError: Can result from `from_files` function.
+
     """
 
     print("SVM Results:")
