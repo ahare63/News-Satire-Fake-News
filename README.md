@@ -1,4 +1,3 @@
-## Currently under construction - refactoring code
 ## Check out documentation [here](https://ahare63.github.io/Senior-Thesis/).
 # Classifying News, Satire, and "Fake News": An SVM and Deep Learning Approach
 Senior Thesis completed as part of coursework for Princeton University.
@@ -13,6 +12,8 @@ I have also included four small files that I used for testing and are helpful to
 The functions in this repository are meant to be somewhat flexible in terms of data, but require the first column to be an index of the data as well as columns named "Date", "Body", and "Title". All other columns will be added in parsing. If the data you would like to use does not have an column indicating an index, you can change the `pandas  csv_read` to generate an index for you. Many functions will work even without some of the three core columns; please read comments to determine which functions require which columns.
 
 Almost all of this code has been refactored from what was used in the actual testing to be more readable and modular. These changes have resulted in a significant departure from the original code. This code is mostly included for reference and to give an idea of the procedures used in this thesis. This also accounts for discrepancies between code samples in the thesis and what is provided directly in this repository.
+
+When refactoring, the decision was made to have a few convenient functions that do most of the work. These functions have many parameters, most of which have default values. They are set up to make it convenient to run with all features or to test only a few. Most use cases should only require functions in `pythonAPI.py` but all have been provided with appropriate documentation.
 
 # Dependencies
 This thesis makes use of several commonly used Python libraries, specifically:
