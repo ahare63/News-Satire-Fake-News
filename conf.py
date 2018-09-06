@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'Senior_Thesis'
+project = 'Senior Thesis'
 copyright = '2018, Adam Hare'
 author = 'Adam Hare'
 
