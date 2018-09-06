@@ -1,7 +1,7 @@
 """
 pythonAPI.py
 Author: Adam Hare <adamth@alumni.princeton.edu>
-Last Updated: 4 September 2018
+Last Updated: 5 September 2018
 
 Description:
 This file contains a few higher level functions to handle data parsing, SVM testing, SVM hyper-parameter testing, and

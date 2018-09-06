@@ -1,0 +1,220 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>parserLib &#8212; Senior Thesis  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for parserLib</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">parserLib.py</span>
+<span class="sd">Author: Adam Hare &lt;adamth@alumni.princeton.edu&gt;</span>
+<span class="sd">Last Updated: 6 September 2018</span>
+
+<span class="sd">Description:</span>
+<span class="sd">This file contains a number of functions used to parse data from the csv files. Some of these functions may be very</span>
+<span class="sd">time-intensive depending on the size of the data set.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">textstat.textstat</span> <span class="k">import</span> <span class="n">textstat</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+
+
+<div class="viewcode-block" id="profanity_count"><a class="viewcode-back" href="../index.html#parserLib.profanity_count">[docs]</a><span class="k">def</span> <span class="nf">profanity_count</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">profane_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function counts the number of profane words in a given text.</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        text: The text to be considered as a string.</span>
+
+<span class="sd">        profane_list: The list of words considered to be profane.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        An integer indicating the number of profane words found in the text.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        Additional errors may be thrown by dependencies.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+
+    <span class="n">num</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">profane_list</span><span class="p">:</span>
+        <span class="n">num</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">text</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">num</span></div>
+
+
+<div class="viewcode-block" id="get_profanity_count"><a class="viewcode-back" href="../index.html#parserLib.get_profanity_count">[docs]</a><span class="k">def</span> <span class="nf">get_profanity_count</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dict_file</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Opens the csv that contains the profane word dictionary and count the number of appearances for each article.</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        data: The data to run the profanity count on.</span>
+
+<span class="sd">        dict_file: A path to a csv that contains a list of profane words.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A column that has a count of the number of profane words found in the &quot;Body&quot; column.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        Additional errors may be thrown by dependencies.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">dict_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+        <span class="n">profane_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">file</span><span class="p">)):</span>
+            <span class="n">profane_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Body&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">profanity_count</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">profane_list</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="get_encoded_date"><a class="viewcode-back" href="../index.html#parserLib.get_encoded_date">[docs]</a><span class="k">def</span> <span class="nf">get_encoded_date</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">date_range</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Does one-hot encoding on the date. Assigns a one to the column corresponding to the year provided and a one to all</span>
+<span class="sd">    others. If the date is `NaN` or out of range, it leaves all columns as zero. Optionally takes a range of supported</span>
+<span class="sd">    years, by default 2010-2017 inclusive.</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        data: The data to encode the date on. In this case a `pandas` `DataFrame` with a column called &quot;Date&quot;.</span>
+
+<span class="sd">        date_range: A range of dates to encode. Includes the lower bound but not the upper bound.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        `data` with new columns for the one-hot encoded data.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        Additional errors may be thrown by dependencies.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">date</span> <span class="ow">in</span> <span class="n">date_range</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">date</span><span class="p">)]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;Date&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">date</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="get_avg_syl_count"><a class="viewcode-back" href="../index.html#parserLib.get_avg_syl_count">[docs]</a><span class="k">def</span> <span class="nf">get_avg_syl_count</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">is_title</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function to get the average number of syllables per word. Here, row refers to the article being considered.</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        row: The row of data to be considered. In this case a row of a `pandas` `DataFrame`.</span>
+
+<span class="sd">        is_title: A boolean value indicating whether or not this average syllable count is for the title.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        An average syllable count for the provided row.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        Additional errors may be thrown by dependencies.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">is_title</span><span class="p">:</span>
+        <span class="n">syl</span> <span class="o">=</span> <span class="n">textstat</span><span class="o">.</span><span class="n">syllable_count</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">Title</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">syl</span><span class="o">/</span><span class="n">row</span><span class="o">.</span><span class="n">titleWordCount</span>
+    <span class="n">syl</span> <span class="o">=</span> <span class="n">textstat</span><span class="o">.</span><span class="n">syllable_count</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">Body</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">syl</span><span class="o">/</span><span class="n">row</span><span class="o">.</span><span class="n">wordCount</span></div>
+
+
+<div class="viewcode-block" id="get_link_count"><a class="viewcode-back" href="../index.html#parserLib.get_link_count">[docs]</a><span class="k">def</span> <span class="nf">get_link_count</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function to count the number of links and Twitter pictures in the provided text.</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        text: The text to be analyzed.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        An integer indicating the number of links found.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        Additional errors may be thrown by dependencies.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+
+    <span class="n">num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;http(s)?://&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">))</span>
+    <span class="n">num</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;pic\.twitter\.com/[A-Za-z0-9]* — .* \(@[A-Za-z0-9]*\)&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">num</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Senior Thesis</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Adam Hare.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

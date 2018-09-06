@@ -22,15 +22,47 @@ Documentation for `exampleApplication.py`
 *This file provides a few high-level examples of how one might use the functions in* `pythonAPI.py` *to achieve
 something similar to the thesis.*
 
-.. autofunction:: exampleApplication.main
-.. autofunction:: exampleApplication.full_svm_test
 .. autofunction:: exampleApplication.full_clstm_test
+.. autofunction:: exampleApplication.full_svm_test
+.. autofunction:: exampleApplication.main
 
 Documentation for `pythonAPI.py`
 --------------------------------
 *This file contains a few higher level functions to handle data parsing, SVM testing, SVM hyper-parameter testing, and
 CLSTM testing.*
 
+.. autofunction:: pythonAPI.build_clstm
+.. autofunction:: pythonAPI.build_svm
 .. autofunction:: pythonAPI.from_files
 .. autofunction:: pythonAPI.parse_data
+.. autofunction:: pythonAPI.preprocess_clstm
 .. autofunction:: pythonAPI.preprocess_svm
+.. autofunction:: pythonAPI.test_clstm
+.. autofunction:: pythonAPI.test_svm
+.. autofunction:: pythonAPI.train_svm_hyperparameters
+
+Documentation for `classifierLib.py`
+------------------------------------
+*This file contains lower-level functions used by functions in `pythonAPI.py` related to building and training
+classifiers.*
+
+.. autofunction:: classifierLib.config_cluster
+.. autofunction:: classifierLib.get_bag_of_words
+.. autofunction:: classifierLib.get_f_score
+.. autofunction:: classifierLib.get_measures
+.. autofunction:: classifierLib.get_precision
+.. autofunction:: classifierLib.get_recall
+.. autofunction:: classifierLib.merge_data
+.. autofunction:: classifierLib.scale_features
+.. autofunction:: classifierLib.split_data
+
+
+Documentation for `parserLib.py`
+--------------------------------
+*This file contains lower-level functions used by functions in `pythonAPI.py`related to parsing data from files.*
+
+.. autofunction:: parserLib.get_avg_syl_count
+.. autofunction:: parserLib.get_encoded_date
+.. autofunction:: parserLib.get_link_count
+.. autofunction:: parserLib.get_profanity_count
+.. autofunction:: parserLib.profanity_count

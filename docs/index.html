@@ -47,9 +47,10 @@ source file, going from highest level to lowest level.</p>
 <p><em>This file provides a few high-level examples of how one might use the functions in</em> <cite>pythonAPI.py</cite> <em>to achieve
 something similar to the thesis.</em></p>
 <dl class="function">
-<dt id="exampleApplication.main">
-<code class="descclassname">exampleApplication.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/exampleApplication.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exampleApplication.main" title="Permalink to this definition">¶</a></dt>
-<dd><p>A main function which simply runs <cite>full_svm_test</cite> and <cite>full_clstm_test</cite>.</p>
+<dt id="exampleApplication.full_clstm_test">
+<code class="descclassname">exampleApplication.</code><code class="descname">full_clstm_test</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/exampleApplication.html#full_clstm_test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exampleApplication.full_clstm_test" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is designed to demonstrate the full functionality of the pythonAPI functions for the CLSTM. It reads
+data from files, builds features, formats them, builds the classifier, tests, and returns the results of the test.</p>
 <dl class="docutils">
 <dt>Args:</dt>
 <dd>None.</dd>
@@ -76,10 +77,9 @@ data from files, builds features, formats them, builds the classifier, tests, an
 </dd></dl>
 
 <dl class="function">
-<dt id="exampleApplication.full_clstm_test">
-<code class="descclassname">exampleApplication.</code><code class="descname">full_clstm_test</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/exampleApplication.html#full_clstm_test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exampleApplication.full_clstm_test" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function is designed to demonstrate the full functionality of the pythonAPI functions for the CLSTM. It reads
-data from files, builds features, formats them, builds the classifier, tests, and returns the results of the test.</p>
+<dt id="exampleApplication.main">
+<code class="descclassname">exampleApplication.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/exampleApplication.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exampleApplication.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>A main function which simply runs <cite>full_svm_test</cite> and <cite>full_clstm_test</cite>.</p>
 <dl class="docutils">
 <dt>Args:</dt>
 <dd>None.</dd>
@@ -95,6 +95,65 @@ data from files, builds features, formats them, builds the classifier, tests, an
 <h2>Documentation for <cite>pythonAPI.py</cite><a class="headerlink" href="#documentation-for-pythonapi-py" title="Permalink to this headline">¶</a></h2>
 <p><em>This file contains a few higher level functions to handle data parsing, SVM testing, SVM hyper-parameter testing, and
 CLSTM testing.</em></p>
+<dl class="function">
+<dt id="pythonAPI.build_clstm">
+<code class="descclassname">pythonAPI.</code><code class="descname">build_clstm</code><span class="sig-paren">(</span><em>data</em>, <em>labels</em>, <em>max_words</em>, <em>max_length</em>, <em>is_cluster=False</em>, <em>embedding_size=100</em>, <em>dropout=0.3</em>, <em>filters=64</em>, <em>kernel=3</em>, <em>conv_activation='relu'</em>, <em>lstm_units=64</em>, <em>dense_activation='sigmoid'</em>, <em>metrics=None</em>, <em>early_stopping=True</em>, <em>batch_size=512</em>, <em>epochs=10</em>, <em>shuffle=True</em>, <em>class_weight=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pythonAPI.html#build_clstm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pythonAPI.build_clstm" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function uses the provided data to build a CLSTM classifier. The default values provided reflect the best
+performance on the data set used for this thesis.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">data: A <cite>pandas</cite> <cite>DataFrame</cite>, likely returned from <cite>preprocess_clstm</cite> on which the classification will be
+performed.</p>
+<p>labels: A <cite>numpy</cite> <cite>ndarray</cite> containing the labels for the data.</p>
+<p>max_words: The max_words of the embedding, as specified in preprocessing.</p>
+<p>max_length: The maximum length of the embedding, as specified in preprocessing.</p>
+<p>is_cluster: A boolean value indicating whether or not to configure this for a cluster computer. Default is
+<cite>False</cite> and the configuration is not changed.</p>
+<p>embedding_size: An integer indicating the size of the embedding layer. Default is 100.</p>
+<p>dropout: A decimal indicating the dropout parameter. Default is 0.3.</p>
+<p>filters: An integer indicating the number of filters in the convolutional layer. Default is 64.</p>
+<p>kernel: An integer indicating the kernel size of the convolutional layer. Default is 3.</p>
+<p>conv_activation: A string indicating the type of activation function for the convolutional layer. Default is
+‘relu’.</p>
+<p>lstm_units: An integer indicating the number of units to use in the LSTM. Default is 64.</p>
+<p>dense_activation: A string indicating the type of activation function to use for the dense layer. Default is
+‘sigmoid’.</p>
+<p>metrics: A list indicating the metrics to use when evaluating classifier performance. Default is to use
+accuracy, precision, recall, and F Score.</p>
+<p>early_stopping: A boolean indicating whether or not to stop early if the classifier performs worse on a given
+epoch. Default is <cite>True</cite>, so the training will stop if performance degrades.</p>
+<p>batch_size: An integer indicating the batch size to use in training. Default is 512.</p>
+<p>epochs: An integer indicating the number of epochs to use in training. Default is 10. Fewer epochs may be used
+in practice if early_stopping is <cite>True</cite>.</p>
+<p>shuffle: A boolean indicating whether or not to shuffle the data. Default is <cite>True</cite>.</p>
+<p class="last">class_weight: A dict of weights for different classes. This can boost performance in cases where one class is
+much bigger than the other. Default is <cite>None</cite> and all classes are weighted equally.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>This function returns a CLSTM classifier trained on the provided data.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pythonAPI.build_svm">
+<code class="descclassname">pythonAPI.</code><code class="descname">build_svm</code><span class="sig-paren">(</span><em>data</em>, <em>labels</em>, <em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pythonAPI.html#build_svm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pythonAPI.build_svm" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function uses the provided data to build an SVM classifier.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">data: A <cite>pandas</cite> <cite>DataFrame</cite>, likely returned from <cite>preprocess_svm</cite> on which the classification will be
+performed.</p>
+<p>labels: A <cite>numpy</cite> <cite>ndarray</cite> containing the labels for the data.</p>
+<p class="last">params: Hyperparameters to be used in classification in the form of a dict.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>This function returns an SVM classifier trained on the provided data.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
 <dl class="function">
 <dt id="pythonAPI.from_files">
 <code class="descclassname">pythonAPI.</code><code class="descname">from_files</code><span class="sig-paren">(</span><em>files</em>, <em>frac=1</em>, <em>shuffle=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pythonAPI.html#from_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pythonAPI.from_files" title="Permalink to this definition">¶</a></dt>
@@ -182,6 +241,39 @@ yet exist.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="pythonAPI.preprocess_clstm">
+<code class="descclassname">pythonAPI.</code><code class="descname">preprocess_clstm</code><span class="sig-paren">(</span><em>data</em>, <em>tokenizer=None</em>, <em>label_column='isSatire'</em>, <em>append_title=True</em>, <em>max_words=None</em>, <em>max_length=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pythonAPI.html#preprocess_clstm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pythonAPI.preprocess_clstm" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function preprocesses the data, preparing it for use by the CLSTM classifier.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">data: A <cite>pandas</cite> <cite>DataFrame</cite> object containing the data to be preprocessed.</p>
+<p>tokenizer: A tokenizer to use to preprocess the data. If not included, this function will assume the data is for
+training and build a new tokenizer. If provided, the function will assume this is testing data and build based
+on the provided tokenizer. It is important that the parameters <cite>append_title</cite>, <cite>max_words</cite>, and <cite>max_length</cite> are
+the same for training and testing. By default this is <cite>None</cite> and a new tokenizer is built.</p>
+<p>label_column: A string indicating the name of the of the column to be used as the labels for the data. By
+default, this is “isSatire”.</p>
+<p>append_title: A boolean value indicating whether or not to append the article title to the front of the body so
+that it is included in the analysis. By default, this is <cite>True</cite>, so the title is appended.</p>
+<p>max_words: An int indicating the maximum size of the dictionary used in tokenization. The top max_words used in
+the corpus (based on frequency) will be retained. By default, this is <cite>None</cite>, which uses all available words.
+For a sufficiently large corpus, this can dramatically and unnecessarily increase compute time. Recommended max
+size for the corpus used in this thesis about 20,000.</p>
+<p class="last">max_length: The maximum length of an article to consider. Articles longer than this will be truncated and
+shorter articles will be padded with null. By default this is the length of the longest article. Again, for a
+significantly large corpus this increases compute time dramatically without a performance benefit. Look at the
+distribution of article length in your corpus to set. Recommended at 4000 for the corpus used in this thesis.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>This function returns a <cite>pandas</cite> <cite>DataFrame</cite> containing the processed data, a <cite>numpy</cite> <cite>ndarray</cite> of labels for
+that data, the tokenizer, max_words, and max_length. <cite>max_words</cite> and <cite>max_length</cite> are returned in case they are
+computed relative to the data because they are needed when preprocessing the testing data.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="pythonAPI.preprocess_svm">
 <code class="descclassname">pythonAPI.</code><code class="descname">preprocess_svm</code><span class="sig-paren">(</span><em>data</em>, <em>vectorizer=None</em>, <em>label_column='isSatire'</em>, <em>bag_of_words_column='Body'</em>, <em>is_tf=False</em>, <em>use_stop_words=True</em>, <em>is_binary=True</em>, <em>feature_columns=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pythonAPI.html#preprocess_svm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pythonAPI.preprocess_svm" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function preprocesses the data, preparing it for use by an SVM classifier. It returns a <cite>pandas</cite> <cite>DataFrame</cite>
@@ -213,6 +305,343 @@ By default, this is all values used in testing. Pass an empty list to include no
 <dt>Returns:</dt>
 <dd>This function returns a <cite>pandas</cite> <cite>DataFrame</cite> containing the processed data, a <cite>numpy</cite> <cite>ndarray</cite> of labels for
 that data, and the bag of words vectorizer.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pythonAPI.test_clstm">
+<code class="descclassname">pythonAPI.</code><code class="descname">test_clstm</code><span class="sig-paren">(</span><em>model</em>, <em>data</em>, <em>labels</em>, <em>verbose=False</em>, <em>print_latex=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pythonAPI.html#test_clstm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pythonAPI.test_clstm" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function finally evaluates the CLSTM on the test data.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">model: The CLSTM model to be evaluated on, likely returned from <cite>build_clstm</cite>.</p>
+<p>data: A <cite>pandas</cite> <cite>DataFrame</cite>, likely returned from <cite>preprocess_svm</cite> on which the classifier will be evaluated.</p>
+<p>labels: A <cite>numpy</cite> <cite>ndarray</cite> containing the true labels for the testing data.</p>
+<p>verbose: A boolean indicating whether or not all data should be printed. By default, <cite>False</cite> and no data is
+printed.</p>
+<p class="last">print_latex: A boolean indicating whether or not to print all data as a row in a <cite>LaTeX</cite> table. Default is
+<cite>False</cite> and no data is printed.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>Returns the results from <cite>keras</cite>.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pythonAPI.test_svm">
+<code class="descclassname">pythonAPI.</code><code class="descname">test_svm</code><span class="sig-paren">(</span><em>model</em>, <em>data</em>, <em>labels</em>, <em>verbose=False</em>, <em>print_latex=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pythonAPI.html#test_svm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pythonAPI.test_svm" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function finally evaluates the SVM model on the test data.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">model: The SVM model to be evaluated on, likely returned from <cite>build_svm</cite>.</p>
+<p>data: A <cite>pandas</cite> <cite>DataFrame</cite>, likely returned from <cite>preprocess_svm</cite> on which the classifier will be evaluated.</p>
+<p>labels: A <cite>numpy</cite> <cite>ndarray</cite> containing the true labels for the testing data.</p>
+<p>verbose: A boolean indicating whether or not all data should be printed. By default, <cite>False</cite> and no data is
+printed.</p>
+<p class="last">print_latex: A boolean indicating whether or not to print all data as a row in a <cite>LaTeX</cite> table. Default is
+<cite>False</cite> and no data is printed.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>Returns accuracy, precision, recall, and F Score for the tested data.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pythonAPI.train_svm_hyperparameters">
+<code class="descclassname">pythonAPI.</code><code class="descname">train_svm_hyperparameters</code><span class="sig-paren">(</span><em>data</em>, <em>labels</em>, <em>params=None</em>, <em>scoring='accuracy'</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pythonAPI.html#train_svm_hyperparameters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pythonAPI.train_svm_hyperparameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function learns hyper-parameters for the SVM for a specific data set and a specific range of parameters. This
+function makes heavy use of standard <cite>sk-learn</cite> functions.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">data: A <cite>pandas</cite> <cite>DataFrame</cite> object containing the data to be preprocessed.</p>
+<p>labels: The labels for data in the form of a <cite>numpy</cite> <cite>ndarray</cite>.</p>
+<p>params: Hyperparameters to be tested in the form of a dict. By default, these are <cite>class_weight</cite> as
+“balanced” and <cite>None</cite> and <cite>C</cite> from 10^-5 to 10^3. Please refer to the <cite>sk-learn</cite> documentation for more
+information.</p>
+<p>scoring: The metric to be used for judging classifier performance, as specified in <cite>sk-learn</cite> documentation.
+The default is ‘accuracy’.</p>
+<p class="last">verbose: A boolean value indicating whether or not to print all of the data returned from the results.
+Default is <cite>False</cite>, which doesn’t print anything.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>A dictionary of the hyperparameters found to fit best with this data.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="documentation-for-classifierlib-py">
+<h2>Documentation for <cite>classifierLib.py</cite><a class="headerlink" href="#documentation-for-classifierlib-py" title="Permalink to this headline">¶</a></h2>
+<p><em>This file contains lower-level functions used by functions in `pythonAPI.py` related to building and training
+classifiers.</em></p>
+<dl class="function">
+<dt id="classifierLib.config_cluster">
+<code class="descclassname">classifierLib.</code><code class="descname">config_cluster</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/classifierLib.html#config_cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#classifierLib.config_cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change some settings to allow this code to work with cluster computers.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>None.</dd>
+<dt>Returns:</dt>
+<dd>None.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="classifierLib.get_bag_of_words">
+<code class="descclassname">classifierLib.</code><code class="descname">get_bag_of_words</code><span class="sig-paren">(</span><em>data</em>, <em>vectorizer</em>, <em>is_tf</em>, <em>use_stop_words</em>, <em>is_binary</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/classifierLib.html#get_bag_of_words"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#classifierLib.get_bag_of_words" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function creates and returns a weighted bag of words from the data based on the provided parameters. <cite>data</cite> is
+expected to be a single column from a <cite>pandas</cite> <cite>DataFrame</cite>, typically “Body” in this use case.</p>
+<p>Args:</p>
+<blockquote>
+<div><p>data: A <cite>pandas</cite> <cite>DataFrame</cite> from which the bag of words will be built.</p>
+<p>vectorizer: The model used to make the bag of words. If <cite>None</cite>, a new bag of words is created by the other
+parameters. If provided, following parameters are ignored and the vectorizer is used instead.</p>
+<p>is_tf: A boolean value indicating whether or not to use the TF-IDF weighting. If <cite>True</cite>, TF-IDF is used and if
+<cite>False</cite> the appearances of words are simply counted.</p>
+<p>use_stop_words: A boolean value indicating whether or not to remove common stop words from the data. When
+<cite>True</cite>, common English stop words are removed and when <cite>False</cite> all words are considered.</p>
+<p>is_binary: A boolean value indicating whether or not to use a binary weighting for word appearances. If <cite>True</cite>,
+any words that appear at least once will get a weight of 1 and all words that don’t appear a weight 0. This
+carries over to TF-IDF, but the TF-IDF still returns a range of values, only considering the word count part of
+it as binary.</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>The bag of words data and the vectorizer used to create it.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="classifierLib.get_f_score">
+<code class="descclassname">classifierLib.</code><code class="descname">get_f_score</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_predicted</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/classifierLib.html#get_f_score"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#classifierLib.get_f_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate F Score.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">y_true: The ground truth labels for the data set.</p>
+<p class="last">y_predicted: The predicted labels for the data set, as returned by the classifier.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>A float signifying the classifier’s F Score on the given data set.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="classifierLib.get_measures">
+<code class="descclassname">classifierLib.</code><code class="descname">get_measures</code><span class="sig-paren">(</span><em>true_labels</em>, <em>predicted_labels</em>, <em>iteration</em>, <em>verbose</em>, <em>print_latex</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/classifierLib.html#get_measures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#classifierLib.get_measures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates some important measures on the results of an SVM classification.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">true_labels: A vector of ground truth labels.</p>
+<p>predicted_labels: A vector of labels predicted by the classifier.</p>
+<p>iteration: Which iteration these results correspond to, for use with shuffled data. Default is <cite>False</cite>, which
+does not print any iteration information. This is available in case the classifier is called in a loop.</p>
+<p>verbose: A boolean indicating whether or not to print all results on separate lines. Default is <cite>False</cite>, which
+does not print any values in this manner.</p>
+<p class="last">print_latex: A boolean indicating whether or not to print the data formatted for a <cite>LaTeX</cite> table. Default is
+<cite>False</cite>, which doesn’t print anything.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>Four floats, corresponding to the accuracy, precision, recall, and F Score of the classifier for the given data.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="classifierLib.get_precision">
+<code class="descclassname">classifierLib.</code><code class="descname">get_precision</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_predicted</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/classifierLib.html#get_precision"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#classifierLib.get_precision" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate precision. This is drawn from old <cite>keras</cite> source code.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">y_true: The ground truth labels for the data set.</p>
+<p class="last">y_predicted: The predicted labels for the data set, as returned by the classifier.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>A float signifying the classifier’s precision on the given data set.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="classifierLib.get_recall">
+<code class="descclassname">classifierLib.</code><code class="descname">get_recall</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_predicted</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/classifierLib.html#get_recall"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#classifierLib.get_recall" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate recall. This is drawn from old <cite>keras</cite> source code.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">y_true: The ground truth labels for the data set.</p>
+<p class="last">y_predicted: The predicted labels for the data set, as returned by the classifier.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>A float signifying the classifier’s recall on the given data set.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="classifierLib.merge_data">
+<code class="descclassname">classifierLib.</code><code class="descname">merge_data</code><span class="sig-paren">(</span><em>file_names</em>, <em>frac</em>, <em>shuffle</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/classifierLib.html#merge_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#classifierLib.merge_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function takes a list of file paths to csv files, reads each into a <cite>pandas</cite> <cite>DataFrame</cite> object, and returns a
+<cite>DataFrame</cite> consisting of the data from all of these files combined. This is useful for combining data from
+different files.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">file_names: The paths to the files to be merged as a list.</p>
+<p>frac: The fraction of each data in each file to be retained. This can vary from 0 to 1 inclusive, with 0
+resulting in no data being read from any of the files and 1 reading all available data.</p>
+<p class="last">shuffle: A boolean value indicating whether or not the data will be shuffled. If <cite>False</cite>, the data will be
+returned in the order it appeared in each file, in the order the files were given in the list.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>One <cite>pandas</cite> <cite>DataFrame</cite> with all of the read data.</dd>
+<dt>Raises:</dt>
+<dd><p class="first">IndexError: Thrown if no file_names is an empty list.</p>
+<p class="last">ValueError: Thrown by <cite>split_data</cite> if <cite>frac</cite> is invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="classifierLib.scale_features">
+<code class="descclassname">classifierLib.</code><code class="descname">scale_features</code><span class="sig-paren">(</span><em>data</em>, <em>feature_list</em>, <em>additional_features</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/classifierLib.html#scale_features"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#classifierLib.scale_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function scales and returns the appropriate feature columns.</p>
+<p>Args:</p>
+<blockquote>
+<div><p>data: The <cite>pandas</cite> <cite>DataFrame</cite> containing the relevant data.</p>
+<p>feature_list: A string list of features to be used in analysis, in this case the names of the columns in <cite>data</cite>
+to be used.</p>
+<p>additional_features: Any additional features not provided in <cite>data</cite> that need to be added. In this case,
+‘additional_features` is often the bag of words returned by get_bag_of_words.</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>A <cite>numpy</cite> <cite>ndarray</cite> consisting of the columns of <cite>feature_list</cite> scaled and concatenated with those in
+<cite>additional_data</cite>.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="classifierLib.split_data">
+<code class="descclassname">classifierLib.</code><code class="descname">split_data</code><span class="sig-paren">(</span><em>data</em>, <em>frac</em>, <em>shuffle</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/classifierLib.html#split_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#classifierLib.split_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a <cite>pandas</cite> <cite>DataFrame</cite>, this function splits it into two parts based on the provided fraction and returns
+both.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">data: The data to be split, in the form of a <cite>pandas</cite> <cite>DataFrame</cite>.</p>
+<p>frac: The fraction of data to be put in the first result. The rest will be returned in the second result. This
+number should range from 0 to 1 inclusive, where 0 puts all data in the second result and 1 puts all data in the
+first result.</p>
+<p class="last">shuffle: A boolean value indicating whether or not to shuffle the data. If <cite>False</cite>, the data will be returned
+in the order it was received.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>Two <cite>pandas</cite> <cite>DataFrame</cite> objects, the first with <cite>frac</cite> * 100 percent of the data and the other with (1-<cite>frac</cite>)
+* 100 percent of the data.</dd>
+<dt>Raises:</dt>
+<dd>ValueError: Thrown if the <cite>frac</cite> parameter is not between 0 and 1.</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="documentation-for-parserlib-py">
+<h2>Documentation for <cite>parserLib.py</cite><a class="headerlink" href="#documentation-for-parserlib-py" title="Permalink to this headline">¶</a></h2>
+<p><em>This file contains lower-level functions used by functions in `pythonAPI.py`related to parsing data from files.</em></p>
+<dl class="function">
+<dt id="parserLib.get_avg_syl_count">
+<code class="descclassname">parserLib.</code><code class="descname">get_avg_syl_count</code><span class="sig-paren">(</span><em>row</em>, <em>is_title</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/parserLib.html#get_avg_syl_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#parserLib.get_avg_syl_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to get the average number of syllables per word. Here, row refers to the article being considered.</p>
+<p>Args:</p>
+<blockquote>
+<div><p>row: The row of data to be considered. In this case a row of a <cite>pandas</cite> <cite>DataFrame</cite>.</p>
+<p>is_title: A boolean value indicating whether or not this average syllable count is for the title.</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>An average syllable count for the provided row.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="parserLib.get_encoded_date">
+<code class="descclassname">parserLib.</code><code class="descname">get_encoded_date</code><span class="sig-paren">(</span><em>data</em>, <em>date_range</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/parserLib.html#get_encoded_date"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#parserLib.get_encoded_date" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does one-hot encoding on the date. Assigns a one to the column corresponding to the year provided and a one to all
+others. If the date is <cite>NaN</cite> or out of range, it leaves all columns as zero. Optionally takes a range of supported
+years, by default 2010-2017 inclusive.</p>
+<p>Args:</p>
+<blockquote>
+<div><p>data: The data to encode the date on. In this case a <cite>pandas</cite> <cite>DataFrame</cite> with a column called “Date”.</p>
+<p>date_range: A range of dates to encode. Includes the lower bound but not the upper bound.</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd><cite>data</cite> with new columns for the one-hot encoded data.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="parserLib.get_link_count">
+<code class="descclassname">parserLib.</code><code class="descname">get_link_count</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/parserLib.html#get_link_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#parserLib.get_link_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to count the number of links and Twitter pictures in the provided text.</p>
+<p>Args:</p>
+<blockquote>
+<div>text: The text to be analyzed.</div></blockquote>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>An integer indicating the number of links found.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="parserLib.get_profanity_count">
+<code class="descclassname">parserLib.</code><code class="descname">get_profanity_count</code><span class="sig-paren">(</span><em>data</em>, <em>dict_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/parserLib.html#get_profanity_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#parserLib.get_profanity_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Opens the csv that contains the profane word dictionary and count the number of appearances for each article.</p>
+<p>Args:</p>
+<blockquote>
+<div><p>data: The data to run the profanity count on.</p>
+<p>dict_file: A path to a csv that contains a list of profane words.</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>A column that has a count of the number of profane words found in the “Body” column.</dd>
+<dt>Raises:</dt>
+<dd>Additional errors may be thrown by dependencies.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="parserLib.profanity_count">
+<code class="descclassname">parserLib.</code><code class="descname">profanity_count</code><span class="sig-paren">(</span><em>text</em>, <em>profane_list</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/parserLib.html#profanity_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#parserLib.profanity_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function counts the number of profane words in a given text.</p>
+<p>Args:</p>
+<blockquote>
+<div><p>text: The text to be considered as a string.</p>
+<p>profane_list: The list of words considered to be profane.</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>An integer indicating the number of profane words found in the text.</dd>
 <dt>Raises:</dt>
 <dd>Additional errors may be thrown by dependencies.</dd>
 </dl>

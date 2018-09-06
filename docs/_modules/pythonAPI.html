@@ -35,7 +35,7 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">pythonAPI.py</span>
 <span class="sd">Author: Adam Hare &lt;adamth@alumni.princeton.edu&gt;</span>
-<span class="sd">Last Updated: 4 September 2018</span>
+<span class="sd">Last Updated: 5 September 2018</span>
 
 <span class="sd">Description:</span>
 <span class="sd">This file contains a few higher level functions to handle data parsing, SVM testing, SVM hyper-parameter testing, and</span>
@@ -61,6 +61,7 @@
 
 
 <div class="viewcode-block" id="from_files"><a class="viewcode-back" href="../index.html#pythonAPI.from_files">[docs]</a><span class="k">def</span> <span class="nf">from_files</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This function takes a list of csv files as input. It reads those files into `pandas` `DataFrame` objects and</span>
 <span class="sd">    combines them. This function makes no effort to ensure that the input files are formatted in the same way.</span>
@@ -313,45 +314,44 @@
     <span class="k">return</span> <span class="n">scale_features</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">feature_columns</span><span class="p">,</span> <span class="n">bag_of_words</span><span class="p">),</span> <span class="n">labels</span><span class="p">,</span> <span class="n">vectorizer</span></div>
 
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">This function preprocesses the data, preparing it for use by the CLSTM classifier. It returns a `pandas` `DataFrame` </span>
-<span class="sd">containing the processed data, a `numpy` `ndarray` of labels for that data, the tokenizer, and the max_length parameter.</span>
-<span class="sd">    Parameters:</span>
+<div class="viewcode-block" id="preprocess_clstm"><a class="viewcode-back" href="../index.html#pythonAPI.preprocess_clstm">[docs]</a><span class="k">def</span> <span class="nf">preprocess_clstm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">tokenizer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label_column</span><span class="o">=</span><span class="s2">&quot;isSatire&quot;</span><span class="p">,</span> <span class="n">append_title</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_words</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
-<span class="sd">        data - A `pandas` `DataFrame` object containing the data to be preprocessed.</span>
-<span class="sd">        </span>
-<span class="sd">        tokenizer - A tokenizer to use to preprocess the data. If not included, this function will assume the data is</span>
-<span class="sd">                    for training and build a new tokenizer. If provided, the function will assume this is testing data</span>
-<span class="sd">                    and build based on the provided tokenizer. It is important that the parameters `append_title`, </span>
-<span class="sd">                    `max_words`, and `max_length` are the same for training and testing. By default this is `None` and a </span>
-<span class="sd">                    new tokenizer is built.</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function preprocesses the data, preparing it for use by the CLSTM classifier.</span>
 
-<span class="sd">        label_column - A string indicating the name of the of the column to be used as the labels for the data. By </span>
-<span class="sd">                       default, this is &quot;isSatire&quot;.</span>
-<span class="sd">                       </span>
-<span class="sd">        append_title - A boolean value indicating whether or not to append the article title to the front of the body</span>
-<span class="sd">                       so that it is included in the analysis. By default, this is `True`, so the title is appended.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        data: A `pandas` `DataFrame` object containing the data to be preprocessed.</span>
 
-<span class="sd">        max_words - An int indicating the maximum size of the dictionary used in tokenization. The top max_words used</span>
-<span class="sd">                    in the corpus (based on frequency) will be retained. By default, this is `None`, which uses all</span>
-<span class="sd">                    available words. For a sufficiently large corpus, this can dramatically and unnecessarily increase</span>
-<span class="sd">                    compute time. Recommended max size for the corpus used in this thesis about 20,000.</span>
-<span class="sd">                    </span>
-<span class="sd">        max_length - The maximum length of an article to consider. Articles longer than this will be truncated and</span>
-<span class="sd">                     shorter articles will be padded with null. By default this is the length of the longest article.</span>
-<span class="sd">                     Again, for a significantly large corpus this increases compute time dramatically without a</span>
-<span class="sd">                     performance benefit. Look at the distribution of article length in your corpus to set. Recommended</span>
-<span class="sd">                     at 4000 for the corpus used in this thesis.</span>
+<span class="sd">        tokenizer: A tokenizer to use to preprocess the data. If not included, this function will assume the data is for</span>
+<span class="sd">        training and build a new tokenizer. If provided, the function will assume this is testing data and build based</span>
+<span class="sd">        on the provided tokenizer. It is important that the parameters `append_title`, `max_words`, and `max_length` are</span>
+<span class="sd">        the same for training and testing. By default this is `None` and a new tokenizer is built.</span>
+
+<span class="sd">        label_column: A string indicating the name of the of the column to be used as the labels for the data. By</span>
+<span class="sd">        default, this is &quot;isSatire&quot;.</span>
+
+<span class="sd">        append_title: A boolean value indicating whether or not to append the article title to the front of the body so</span>
+<span class="sd">        that it is included in the analysis. By default, this is `True`, so the title is appended.</span>
+
+<span class="sd">        max_words: An int indicating the maximum size of the dictionary used in tokenization. The top max_words used in</span>
+<span class="sd">        the corpus (based on frequency) will be retained. By default, this is `None`, which uses all available words.</span>
+<span class="sd">        For a sufficiently large corpus, this can dramatically and unnecessarily increase compute time. Recommended max</span>
+<span class="sd">        size for the corpus used in this thesis about 20,000.</span>
+
+<span class="sd">        max_length: The maximum length of an article to consider. Articles longer than this will be truncated and</span>
+<span class="sd">        shorter articles will be padded with null. By default this is the length of the longest article. Again, for a</span>
+<span class="sd">        significantly large corpus this increases compute time dramatically without a performance benefit. Look at the</span>
+<span class="sd">        distribution of article length in your corpus to set. Recommended at 4000 for the corpus used in this thesis.</span>
 
 
 <span class="sd">    Returns:</span>
-<span class="sd">    It returns a `pandas` `DataFrame` containing the processed data, a `numpy` `ndarray` of labels for that data, the </span>
-<span class="sd">    tokenizer, the max_words, and the max_length parameter. `max_words` and `max_length` are returned in case they are</span>
-<span class="sd">    computed relative to the data because they are needed when preprocessing the testing data.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function returns a `pandas` `DataFrame` containing the processed data, a `numpy` `ndarray` of labels for</span>
+<span class="sd">        that data, the tokenizer, max_words, and max_length. `max_words` and `max_length` are returned in case they are</span>
+<span class="sd">        computed relative to the data because they are needed when preprocessing the testing data.</span>
 
-
-<span class="k">def</span> <span class="nf">preprocess_clstm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">tokenizer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label_column</span><span class="o">=</span><span class="s2">&quot;isSatire&quot;</span><span class="p">,</span> <span class="n">append_title</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_words</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="sd">    Raises:</span>
+<span class="sd">        Additional errors may be thrown by dependencies.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Get data labels.</span>
     <span class="n">labels</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">label_column</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
@@ -381,31 +381,37 @@
         <span class="n">max_words</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">word_index</span><span class="p">)</span>
 
     <span class="c1"># Pad for use with CLSTM and return.</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pad_sequences</span><span class="p">(</span><span class="n">as_sequence</span><span class="p">,</span> <span class="n">maxlen</span><span class="o">=</span><span class="n">max_length</span><span class="p">)),</span> <span class="n">labels</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">max_words</span><span class="p">,</span> <span class="n">max_length</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pad_sequences</span><span class="p">(</span><span class="n">as_sequence</span><span class="p">,</span> <span class="n">maxlen</span><span class="o">=</span><span class="n">max_length</span><span class="p">)),</span> <span class="n">labels</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">max_words</span><span class="p">,</span> <span class="n">max_length</span></div>
 
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">This function learns hyper-parameters for the SVM for a specific data set and a specific range of parameters.</span>
-<span class="sd">This function makes heavy use of standard `sk-learn` functions.</span>
-<span class="sd">    Parameters:</span>
-<span class="sd">        data - A `pandas` `DataFrame` object containing the preprocessed data.</span>
+<div class="viewcode-block" id="train_svm_hyperparameters"><a class="viewcode-back" href="../index.html#pythonAPI.train_svm_hyperparameters">[docs]</a><span class="k">def</span> <span class="nf">train_svm_hyperparameters</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 
-<span class="sd">        labels - The labels for data.</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function learns hyper-parameters for the SVM for a specific data set and a specific range of parameters. This</span>
+<span class="sd">    function makes heavy use of standard `sk-learn` functions.</span>
 
-<span class="sd">        params - Hyperparameters to be tested. By default, these are `class_weight` as &quot;balanced&quot; and `None` and `C`</span>
-<span class="sd">                 from 10^-5 to 10^3. Please refer to the `sk-learn` documentation for more information.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        data: A `pandas` `DataFrame` object containing the data to be preprocessed.</span>
 
-<span class="sd">        scoring - The metrics to be used for judging classifier efficiency, as specified in `sk-learn` documentation.</span>
-<span class="sd">                  The default is &#39;accuracy&#39;.</span>
+<span class="sd">        labels: The labels for data in the form of a `numpy` `ndarray`.</span>
 
-<span class="sd">        verbose - A boolean value indicating whether or not to print all of the data returned from the results. Default</span>
-<span class="sd">                  is `False`, which doesn&#39;t print anything.</span>
+<span class="sd">        params: Hyperparameters to be tested in the form of a dict. By default, these are `class_weight` as</span>
+<span class="sd">        &quot;balanced&quot; and `None` and `C` from 10^-5 to 10^3. Please refer to the `sk-learn` documentation for more</span>
+<span class="sd">        information.</span>
+
+<span class="sd">        scoring: The metric to be used for judging classifier performance, as specified in `sk-learn` documentation.</span>
+<span class="sd">        The default is &#39;accuracy&#39;.</span>
+
+<span class="sd">        verbose: A boolean value indicating whether or not to print all of the data returned from the results.</span>
+<span class="sd">        Default is `False`, which doesn&#39;t print anything.</span>
+
+
 <span class="sd">    Returns:</span>
 <span class="sd">        A dictionary of the hyperparameters found to fit best with this data.</span>
-<span class="sd">&quot;&quot;&quot;</span>
 
-
-<span class="k">def</span> <span class="nf">train_svm_hyperparameters</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="sd">    Raises:</span>
+<span class="sd">        Additional errors may be thrown by dependencies.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
 
     <span class="c1"># Set the parameters to be tried.</span>
     <span class="k">if</span> <span class="n">params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -424,93 +430,95 @@
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Best score: &quot;</span><span class="p">,</span> <span class="n">classifier</span><span class="o">.</span><span class="n">best_score_</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Best estimator: &quot;</span><span class="p">,</span> <span class="n">classifier</span><span class="o">.</span><span class="n">best_estimator_</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">classifier</span><span class="o">.</span><span class="n">best_params_</span>
+    <span class="k">return</span> <span class="n">classifier</span><span class="o">.</span><span class="n">best_params_</span></div>
 
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">This function uses the provided data to build an SVM classifier.</span>
-<span class="sd">    Parameters:</span>
+<div class="viewcode-block" id="build_svm"><a class="viewcode-back" href="../index.html#pythonAPI.build_svm">[docs]</a><span class="k">def</span> <span class="nf">build_svm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
 
-<span class="sd">        data - A `pandas` `DataFrame`, likely returned from either `preprocess_svm` or preprocess_nn` on which the</span>
-<span class="sd">               classification will be performed.</span>
-<span class="sd">        </span>
-<span class="sd">        labels - A `numpy` `ndarray` containing the labels for the data.</span>
-<span class="sd">                         </span>
-<span class="sd">                          </span>
-<span class="sd">        params - Hyperparameters to be used in classification.</span>
-<span class="sd">                 </span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function uses the provided data to build an SVM classifier.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data: A `pandas` `DataFrame`, likely returned from `preprocess_svm` on which the classification will be</span>
+<span class="sd">        performed.</span>
+
+<span class="sd">        labels: A `numpy` `ndarray` containing the labels for the data.</span>
+
+<span class="sd">        params: Hyperparameters to be used in classification in the form of a dict.</span>
+
+
 <span class="sd">    Returns:</span>
-<span class="sd">        This function returns a classifier trained on the provided data.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function returns an SVM classifier trained on the provided data.</span>
 
-
-<span class="k">def</span> <span class="nf">build_svm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+<span class="sd">    Raises:</span>
+<span class="sd">        Additional errors may be thrown by dependencies.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
 
     <span class="c1"># Build using the specified parameters.</span>
     <span class="n">svc</span> <span class="o">=</span> <span class="n">LinearSVC</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
     <span class="c1"># Fit on the provided data and return.</span>
-    <span class="k">return</span> <span class="n">svc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">svc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span></div>
 
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">This function uses the provided data to build a CLSTM classifier. The default values provided reflect the best </span>
-<span class="sd">performance  on the data set used for this thesis.</span>
-<span class="sd">    Parameters:</span>
-
-<span class="sd">        data - A `pandas` `DataFrame`, likely returned from either `preprocess_svm` or preprocess_nn` on which the</span>
-<span class="sd">               classification will be performed.</span>
-
-<span class="sd">        labels - A `numpy` `ndarray` containing the labels for the data.</span>
-
-
-<span class="sd">        max_words - The max_words of the embedding, as specified in preprocessing.</span>
-<span class="sd">        </span>
-<span class="sd">        max_length - The maximum length of the embedding, as specified in preprocessing.</span>
-<span class="sd">        </span>
-<span class="sd">        is_cluster - A boolean value indicating whether or not to configure this for a cluster computer. Default is</span>
-<span class="sd">                     `False` and the configuration is not changed.</span>
-<span class="sd">                     </span>
-<span class="sd">        embedding_size - An integer indicating the size of the embedding layer. Default is 100.</span>
-<span class="sd">        </span>
-<span class="sd">        dropout - A decimal indicating the dropout value. Default is 0.3.</span>
-<span class="sd">        </span>
-<span class="sd">        filters - An integer indicating the number of filters in the convolutional layer. Default is 64.</span>
-<span class="sd">        </span>
-<span class="sd">        kernel - An integer indicating the kernel size of the convolutional layer. Default is 3.</span>
-<span class="sd">        </span>
-<span class="sd">        conv_activation - A string indicating the type of activation function for the convolutional layer. Default is</span>
-<span class="sd">                          &#39;relu&#39;.</span>
-<span class="sd">                          </span>
-<span class="sd">        lstm_units - An integer indicating the number of units to use in the LSTM. Default is 64.</span>
-<span class="sd">        </span>
-<span class="sd">        dense_activation - A string indicating the type of activation function to use for the dense layer. Default is</span>
-<span class="sd">                           &#39;sigmoid&#39;.</span>
-<span class="sd">                           </span>
-<span class="sd">        metrics - A list indicating the metrics to use when evaluating classifier performance. Default is to use</span>
-<span class="sd">                  accuracy, precision, recall, and F Score.</span>
-<span class="sd">                  </span>
-<span class="sd">        early_stopping - A boolean indicating whether or not to stop early if the classifier performs worse on a given</span>
-<span class="sd">                         epoch. Default is `True`, so the training will stop if performance degrades.</span>
-<span class="sd">                         </span>
-<span class="sd">        batch_size - An integer indicating the batch size to use in training. Default is 512.</span>
-<span class="sd">        </span>
-<span class="sd">        epochs - An integer indicating the number of epochs to use in training. Default is 10. Fewer epochs may be used</span>
-<span class="sd">                 in practice if early_stopping is `True`.</span>
-<span class="sd">                 </span>
-<span class="sd">        shuffle - A boolean indicating whether or not to shuffle the data. Default is `True`.</span>
-<span class="sd">        </span>
-<span class="sd">        class_weight - A dictionary of weights for different classes. This can boost performance in cases where one </span>
-<span class="sd">                       class is much bigger than the other.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        This function returns a classifier trained on the provided data.</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-
-<span class="k">def</span> <span class="nf">build_clstm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">max_words</span><span class="p">,</span> <span class="n">max_length</span><span class="p">,</span> <span class="n">is_cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">embedding_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+<div class="viewcode-block" id="build_clstm"><a class="viewcode-back" href="../index.html#pythonAPI.build_clstm">[docs]</a><span class="k">def</span> <span class="nf">build_clstm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">max_words</span><span class="p">,</span> <span class="n">max_length</span><span class="p">,</span> <span class="n">is_cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">embedding_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
                 <span class="n">kernel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">conv_activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">lstm_units</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">dense_activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">early_stopping</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">class_weight</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function uses the provided data to build a CLSTM classifier. The default values provided reflect the best</span>
+<span class="sd">    performance on the data set used for this thesis.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data: A `pandas` `DataFrame`, likely returned from `preprocess_clstm` on which the classification will be</span>
+<span class="sd">        performed.</span>
+
+<span class="sd">        labels: A `numpy` `ndarray` containing the labels for the data.</span>
+
+<span class="sd">        max_words: The max_words of the embedding, as specified in preprocessing.</span>
+
+<span class="sd">        max_length: The maximum length of the embedding, as specified in preprocessing.</span>
+
+<span class="sd">        is_cluster: A boolean value indicating whether or not to configure this for a cluster computer. Default is</span>
+<span class="sd">        `False` and the configuration is not changed.</span>
+
+<span class="sd">        embedding_size: An integer indicating the size of the embedding layer. Default is 100.</span>
+
+<span class="sd">        dropout: A decimal indicating the dropout parameter. Default is 0.3.</span>
+
+<span class="sd">        filters: An integer indicating the number of filters in the convolutional layer. Default is 64.</span>
+
+<span class="sd">        kernel: An integer indicating the kernel size of the convolutional layer. Default is 3.</span>
+
+<span class="sd">        conv_activation: A string indicating the type of activation function for the convolutional layer. Default is</span>
+<span class="sd">        &#39;relu&#39;.</span>
+
+<span class="sd">        lstm_units: An integer indicating the number of units to use in the LSTM. Default is 64.</span>
+
+<span class="sd">        dense_activation: A string indicating the type of activation function to use for the dense layer. Default is</span>
+<span class="sd">        &#39;sigmoid&#39;.</span>
+
+<span class="sd">        metrics: A list indicating the metrics to use when evaluating classifier performance. Default is to use</span>
+<span class="sd">        accuracy, precision, recall, and F Score.</span>
+
+<span class="sd">        early_stopping: A boolean indicating whether or not to stop early if the classifier performs worse on a given</span>
+<span class="sd">        epoch. Default is `True`, so the training will stop if performance degrades.</span>
+
+<span class="sd">        batch_size: An integer indicating the batch size to use in training. Default is 512.</span>
+
+<span class="sd">        epochs: An integer indicating the number of epochs to use in training. Default is 10. Fewer epochs may be used</span>
+<span class="sd">        in practice if early_stopping is `True`.</span>
+
+<span class="sd">        shuffle: A boolean indicating whether or not to shuffle the data. Default is `True`.</span>
+
+<span class="sd">        class_weight: A dict of weights for different classes. This can boost performance in cases where one class is</span>
+<span class="sd">        much bigger than the other. Default is `None` and all classes are weighted equally.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        This function returns a CLSTM classifier trained on the provided data.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        Additional errors may be thrown by dependencies.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
 
     <span class="c1"># Set configuration for cluster computer if indicated.</span>
     <span class="k">if</span> <span class="n">is_cluster</span><span class="p">:</span>
@@ -540,29 +548,63 @@
     <span class="c1"># Fit and return the CLSTM.</span>
     <span class="n">model_clstm</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">labels</span><span class="p">),</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span>
                     <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">,</span> <span class="n">class_weight</span><span class="o">=</span><span class="n">class_weight</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">model_clstm</span>
+    <span class="k">return</span> <span class="n">model_clstm</span></div>
 
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">This function finally evaluates the CLSTM on the test data.</span>
-<span class="sd">Parameters: </span>
-<span class="sd">    model - The CLSTM model to be evaluated on.</span>
-<span class="sd">    </span>
-<span class="sd">    data - The data to be tested on.</span>
-<span class="sd">    </span>
-<span class="sd">    labels - The true labels for the testing data.</span>
-<span class="sd">    </span>
-<span class="sd">    verbose - A boolean indicating whether or not to print the results. By default `False` and no results are printed.</span>
-<span class="sd">    </span>
-<span class="sd">    print_latex - A boolean indicating whether or not to print the results formatted for a LaTeX table. Default is </span>
-<span class="sd">                  `False` which does not print results in this format.</span>
-<span class="sd">                  </span>
-<span class="sd">Returns:</span>
-<span class="sd">    Returns the results.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="test_svm"><a class="viewcode-back" href="../index.html#pythonAPI.test_svm">[docs]</a><span class="k">def</span> <span class="nf">test_svm</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_latex</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function finally evaluates the SVM model on the test data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: The SVM model to be evaluated on, likely returned from `build_svm`.</span>
+
+<span class="sd">        data: A `pandas` `DataFrame`, likely returned from `preprocess_svm` on which the classifier will be evaluated.</span>
+
+<span class="sd">        labels: A `numpy` `ndarray` containing the true labels for the testing data.</span>
+
+<span class="sd">        verbose: A boolean indicating whether or not all data should be printed. By default, `False` and no data is</span>
+<span class="sd">        printed.</span>
+
+<span class="sd">        print_latex: A boolean indicating whether or not to print all data as a row in a `LaTeX` table. Default is</span>
+<span class="sd">        `False` and no data is printed.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Returns accuracy, precision, recall, and F Score for the tested data.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        Additional errors may be thrown by dependencies.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+
+    <span class="c1"># Predict labels.</span>
+    <span class="n">predicted_labels</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="c1"># Get performance measures.</span>
+    <span class="k">return</span> <span class="n">get_measures</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">predicted_labels</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">print_latex</span><span class="o">=</span><span class="n">print_latex</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">test_clstm</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_latex</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="test_clstm"><a class="viewcode-back" href="../index.html#pythonAPI.test_clstm">[docs]</a><span class="k">def</span> <span class="nf">test_clstm</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_latex</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function finally evaluates the CLSTM on the test data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: The CLSTM model to be evaluated on, likely returned from `build_clstm`.</span>
+
+<span class="sd">        data: A `pandas` `DataFrame`, likely returned from `preprocess_svm` on which the classifier will be evaluated.</span>
+
+<span class="sd">        labels: A `numpy` `ndarray` containing the true labels for the testing data.</span>
+
+<span class="sd">        verbose: A boolean indicating whether or not all data should be printed. By default, `False` and no data is</span>
+<span class="sd">        printed.</span>
+
+<span class="sd">        print_latex: A boolean indicating whether or not to print all data as a row in a `LaTeX` table. Default is</span>
+<span class="sd">        `False` and no data is printed.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Returns the results from `keras`.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        Additional errors may be thrown by dependencies.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
 
     <span class="c1"># Evaluate the data and print the results.</span>
     <span class="n">results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>
@@ -573,39 +615,7 @@
     <span class="k">if</span> <span class="n">print_latex</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; </span><span class="si">%.4f</span><span class="s2"> &amp; </span><span class="si">%.4f</span><span class="s2"> &amp; </span><span class="si">%.4f</span><span class="s2"> &amp; </span><span class="si">%.4f</span><span class="s2"> </span><span class="se">\\\\</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="mi">4</span><span class="p">]))</span>
 
-    <span class="k">return</span> <span class="n">results</span>
-
-
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">This function finally evaluates the SVM model on the test data.</span>
-<span class="sd">Parameters:</span>
-<span class="sd">    model - The SVM model to be evaluated on.</span>
-<span class="sd">    </span>
-<span class="sd">    data - The data to be tested on.</span>
-<span class="sd">    </span>
-<span class="sd">    labels - The true labels for the testing data.</span>
-<span class="sd">    </span>
-<span class="sd">    iteration - An integer corresponding to the iteration number this is. By default, `None`.</span>
-<span class="sd">    </span>
-<span class="sd">    verbose - A boolean indicating whether or not all data should be printed. By default, `False` and no data is </span>
-<span class="sd">              printed.</span>
-<span class="sd">              </span>
-<span class="sd">    print_latex - A boolean indicating whether or not to print all data as a row in a `LaTeX` table. Default is `False`</span>
-<span class="sd">                  and no data is printed.</span>
-<span class="sd">                  </span>
-<span class="sd">Returns:</span>
-<span class="sd">    Returns accuracy, precision, recall, and F Score for the tested data.</span>
-<span class="sd">    </span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-
-<span class="k">def</span> <span class="nf">test_svm</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_latex</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-
-    <span class="c1"># Predict labels.</span>
-    <span class="n">predicted_labels</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-
-    <span class="c1"># Get performance measures.</span>
-    <span class="k">return</span> <span class="n">get_measures</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">predicted_labels</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">print_latex</span><span class="o">=</span><span class="n">print_latex</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">results</span></div>
 </pre></div>
 
           </div>

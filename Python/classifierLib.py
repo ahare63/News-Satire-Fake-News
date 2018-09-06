@@ -1,7 +1,7 @@
 """
 classifierLib.py
 Author: Adam Hare <adamth@alumni.princeton.edu>
-Last Updated: 4 September 2018
+Last Updated: 6 September 2018
 
 Description:
 This file contains a number of functions used to train and evaluate data using the machine learning classifiers.
@@ -252,17 +252,19 @@ def get_f_score(y_true, y_predicted):
     return (2*pre*rec)/(pre + rec)
 
 
-"""
-Change some settings to allow this code to work with cluster computers.
-Parameters:
-    None.
-
-Returns:
-    None.
-"""
-
-
 def config_cluster():
+    """
+    Change some settings to allow this code to work with cluster computers.
+
+    Args:
+        None.
+
+    Returns:
+        None.
+
+    Raises:
+        Additional errors may be thrown by dependencies.
+   """
 
     # Fixes out of memory errors on Nobel.
     config = tf.ConfigProto()
@@ -270,27 +272,30 @@ def config_cluster():
     k.set_session(tf.Session(config=config))
 
 
-"""
-Calculates some important measures on the results of an SVM classification.
-Parameters:
-    true_labels - A vector of ground truth labels.
-    
-    predicted_labels - A vector of labels predicted by the classifier.
-    
-    iteration - Which iteration these results correspond to, for use with shuffled data. Default is `False`, which
-                does not print any iteration information.
-                
-    verbose - A boolean indicating whether or not to print all results on separate lines. Default is `False`, which does
-              not print any values in this manner.
-              
-    print_latex - A boolean indicating whether or not to print the data formatted for a `LaTeX` table. Default is 
-                  `False`, which doesn't print anything.
-Returns:
-    Four floats, corresponding to the accuracy, precision, recall, and F Score of the classifier for the given data.
-"""
-
-
 def get_measures(true_labels, predicted_labels, iteration, verbose, print_latex):
+    """
+    Calculates some important measures on the results of an SVM classification.
+
+    Args:
+        true_labels: A vector of ground truth labels.
+
+        predicted_labels: A vector of labels predicted by the classifier.
+
+        iteration: Which iteration these results correspond to, for use with shuffled data. Default is `False`, which
+        does not print any iteration information. This is available in case the classifier is called in a loop.
+
+        verbose: A boolean indicating whether or not to print all results on separate lines. Default is `False`, which
+        does not print any values in this manner.
+
+        print_latex: A boolean indicating whether or not to print the data formatted for a `LaTeX` table. Default is
+        `False`, which doesn't print anything.
+
+    Returns:
+        Four floats, corresponding to the accuracy, precision, recall, and F Score of the classifier for the given data.
+
+    Raises:
+        Additional errors may be thrown by dependencies.
+   """
 
     # Initialize variables.
     true_positive = 0
