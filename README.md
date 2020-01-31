@@ -1,4 +1,3 @@
-## Check out documentation [here](https://ahare63.github.io/Senior-Thesis/).
 # Classifying News, Satire, and "Fake News": An SVM and Deep Learning Approach
 Senior Thesis completed as part of coursework for Princeton University.
 This thesis was awarded the S.S. Wilkes Memorial Prize by the Princeton Operations Research and Financial Engineering department for the best thesis on "statistics and its applications to solving societal problems."
